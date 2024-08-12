@@ -311,11 +311,11 @@ vkrndr::vulkan_pipeline_builder::add_vertex_input(
         vertex_input_attributes_.size() + attribute_descriptions.size());
 
     vertex_input_binding_.insert(vertex_input_binding_.cend(),
-        binding_descriptions.cbegin(),
-        binding_descriptions.cend());
+        binding_descriptions.begin(),
+        binding_descriptions.end());
     vertex_input_attributes_.insert(vertex_input_attributes_.cend(),
-        attribute_descriptions.cbegin(),
-        attribute_descriptions.cend());
+        attribute_descriptions.begin(),
+        attribute_descriptions.end());
     return *this;
 }
 

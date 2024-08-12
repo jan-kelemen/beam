@@ -30,7 +30,7 @@ namespace
                     return format.format == VK_FORMAT_B8G8R8A8_SRGB &&
                         format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
                 })};
-            it != available_formats.cend())
+            it != available_formats.end())
         {
             return *it;
         }
@@ -43,7 +43,7 @@ namespace
     {
         constexpr auto preferred_mode{VK_PRESENT_MODE_MAILBOX_KHR};
         return std::ranges::find(available_present_modes, preferred_mode) !=
-                available_present_modes.cend()
+                available_present_modes.end()
             ? preferred_mode
             : VK_PRESENT_MODE_FIFO_KHR;
     }
