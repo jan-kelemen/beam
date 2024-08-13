@@ -37,9 +37,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: clang
-          compiler-version: ${{ env.CLANG_VER }}
-          profile: static-analysis
+          profile: clang-libstdcxx-amd64-linux-static-analysis
 
       - name: Configure CMake
         run: |
@@ -78,9 +76,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: clang
-          compiler-version: ${{ env.CLANG_VER }}
-          profile: static-analysis
+          profile: clang-libstdcxx-amd64-linux-static-analysis
 
       - name: Configure CMake
         run: |
@@ -110,9 +106,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: gcc
-          compiler-version: ${{ env.GCC_VER }}
-          profile: static-analysis             
+          profile: gcc-amd64-linux-static-analysis             
 
       - name: Configure CMake
         run: |
@@ -145,9 +139,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: gcc
-          compiler-version: ${{ env.GCC_VER }}
-          profile: static-analysis             
+          profile: gcc-amd64-linux-static-analysis             
 
       - name: Configure CMake
         run: |
@@ -178,9 +170,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: msvc
-          compiler-version: 2022
-          profile: msvc-analyze
+          profile: msvc-amd64-windows-analyze
 
       - name: Configure CMake
         run: |

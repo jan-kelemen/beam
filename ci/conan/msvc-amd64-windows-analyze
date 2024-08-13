@@ -1,4 +1,4 @@
-include(../../conan/msvc-2022)
+include(../../conan/msvc-2022-amd64-windows)
 include(../../conan/dependencies)
 
 [settings]

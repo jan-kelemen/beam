@@ -20,7 +20,7 @@ runs:
         wget -O - https://apt.llvm.org/llvm-snapshot.gpg.key | sudo apt-key add -
         . /etc/lsb-release
         sudo add-apt-repository -y "deb http://apt.llvm.org/${DISTRIB_CODENAME}/ llvm-toolchain-${DISTRIB_CODENAME}-${{ inputs.version }} main"
-        sudo apt-get install -y clang-${{ inputs.version }} llvm-${{ inputs.version }}
+        sudo apt-get install -y clang-${{ inputs.version }} llvm-${{ inputs.version }} libc++-${{ inputs.version }}-dev libc++abi-${{ inputs.version }}-dev
 
     - name: Install clang-tidy
       shell: bash

@@ -34,9 +34,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: clang
-          compiler-version: ${{ env.CLANG_VER }}
-          profile: clang-asan-leak-undefined
+          profile: clang-libstdcxx-amd64-linux-asan-leak-undefined
 
       - name: Configure CMake
         run: |
@@ -70,9 +68,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: gcc
-          compiler-version: ${{ env.GCC_VER }}
-          profile: gcc-tsan
+          profile: gcc-amd64-linux-tsan
 
       - name: Configure CMake
         run: |
@@ -104,9 +100,7 @@ jobs:
         id: setup-conan
         uses: ./.github/actions/setup-conan
         with:
-          compiler: msvc
-          compiler-version: 2022
-          profile: msvc-asan
+          profile: msvc-amd64-windows-asan
 
       - name: Configure CMake
         run: |
