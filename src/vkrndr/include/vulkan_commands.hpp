@@ -13,6 +13,16 @@ namespace vkrndr
 
 namespace vkrndr
 {
+    void transition_image(VkImage image,
+        VkCommandBuffer command_buffer,
+        VkImageLayout old_layout,
+        VkPipelineStageFlags2 src_stage_mask,
+        VkAccessFlags2 src_access_mask,
+        VkImageLayout new_layout,
+        VkPipelineStageFlags2 dst_stage_mask,
+        VkAccessFlags2 dst_access_mask,
+        uint32_t mip_levels);
+
     void create_command_buffers(vkrndr::vulkan_device const* device,
         VkCommandPool command_pool,
         uint32_t count,

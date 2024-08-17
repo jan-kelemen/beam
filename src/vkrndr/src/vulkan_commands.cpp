@@ -9,43 +9,40 @@
 #include <cassert>
 #include <stdexcept>
 
-namespace
+void vkrndr::transition_image(VkImage const image,
+    VkCommandBuffer const command_buffer,
+    VkImageLayout const old_layout,
+    VkPipelineStageFlags2 const src_stage_mask,
+    VkAccessFlags2 const src_access_mask,
+    VkImageLayout const new_layout,
+    VkPipelineStageFlags2 const dst_stage_mask,
+    VkAccessFlags2 const dst_access_mask,
+    uint32_t const mip_levels)
 {
-    void transition_image(VkImage const image,
-        VkCommandBuffer const command_buffer,
-        VkImageLayout const old_layout,
-        VkPipelineStageFlags2 const src_stage_mask,
-        VkAccessFlags2 const src_access_mask,
-        VkImageLayout const new_layout,
-        VkPipelineStageFlags2 const dst_stage_mask,
-        VkAccessFlags2 const dst_access_mask,
-        uint32_t const mip_levels)
-    {
-        VkImageMemoryBarrier2 barrier{};
-        barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
-        barrier.oldLayout = old_layout;
-        barrier.srcStageMask = src_stage_mask;
-        barrier.srcAccessMask = src_access_mask;
-        barrier.newLayout = new_layout;
-        barrier.dstStageMask = dst_stage_mask;
-        barrier.dstAccessMask = dst_access_mask;
-        barrier.image = image;
-        barrier.subresourceRange = {
-            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
-            .baseMipLevel = 0,
-            .levelCount = mip_levels,
-            .baseArrayLayer = 0,
-            .layerCount = 1,
-        };
+    VkImageMemoryBarrier2 barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER_2;
+    barrier.oldLayout = old_layout;
+    barrier.srcStageMask = src_stage_mask;
+    barrier.srcAccessMask = src_access_mask;
+    barrier.newLayout = new_layout;
+    barrier.dstStageMask = dst_stage_mask;
+    barrier.dstAccessMask = dst_access_mask;
+    barrier.image = image;
+    barrier.subresourceRange = {
+        .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+        .baseMipLevel = 0,
+        .levelCount = mip_levels,
+        .baseArrayLayer = 0,
+        .layerCount = 1,
+    };
 
-        VkDependencyInfo dependency{};
-        dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
-        dependency.imageMemoryBarrierCount = 1;
-        dependency.pImageMemoryBarriers = &barrier;
+    VkDependencyInfo dependency{};
+    dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+    dependency.imageMemoryBarrierCount = 1;
+    dependency.pImageMemoryBarriers = &barrier;
 
-        vkCmdPipelineBarrier2(command_buffer, &dependency);
-    }
-} // namespace
+    vkCmdPipelineBarrier2(command_buffer, &dependency);
+}
 
 void vkrndr::create_command_buffers(vulkan_device const* const device,
     VkCommandPool const command_pool,

@@ -20,6 +20,7 @@ namespace vkrndr
         VmaAllocation allocation{VK_NULL_HANDLE};
         VkImageView view{VK_NULL_HANDLE};
         VkFormat format{};
+        VkSampleCountFlags sample_count{VK_SAMPLE_COUNT_1_BIT};
         uint32_t mip_levels{1};
     };
 

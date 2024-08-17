@@ -192,9 +192,6 @@ bool vkrndr::vulkan_renderer::begin_frame(scene* const scene)
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     check_result(vkBeginCommandBuffer(primary_buffer, &begin_info));
 
-    wait_for_color_attachment_write(swap_chain_->image(image_index_),
-        primary_buffer);
-
     if (imgui_layer_)
     {
         imgui_layer_->begin_frame();
@@ -223,9 +220,15 @@ void vkrndr::vulkan_renderer::draw(scene* const scene)
     VkCommandBuffer command_buffer{
         frame_data_->present_command_buffers
             [frame_data_->used_present_command_buffers_ - 1]};
-    scene->draw(swap_chain_->image_view(image_index_),
-        command_buffer,
-        extent());
+
+    vulkan_image target_image{.image = swap_chain_->image(image_index_),
+        .allocation = VK_NULL_HANDLE,
+        .view = swap_chain_->image_view(image_index_),
+        .format = swap_chain_->image_format(),
+        .sample_count = VK_SAMPLE_COUNT_1_BIT,
+        .mip_levels = 0};
+
+    scene->draw(target_image, command_buffer, extent());
 
     if (imgui_layer_)
     {
@@ -236,9 +239,6 @@ void vkrndr::vulkan_renderer::draw(scene* const scene)
             swap_chain_->image_view(image_index_),
             extent());
     }
-
-    transition_to_present_layout(swap_chain_->image(image_index_),
-        command_buffer);
 
     check_result(vkEndCommandBuffer(command_buffer));
 
