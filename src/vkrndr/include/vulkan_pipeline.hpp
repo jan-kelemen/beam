@@ -155,6 +155,45 @@ namespace vkrndr
         std::optional<VkPipelineDepthStencilStateCreateInfo> depth_stencil_;
         std::vector<VkDynamicState> dynamic_states_;
     };
+
+    class [[nodiscard]] vulkan_compute_pipeline_builder final
+    {
+    public:
+        vulkan_compute_pipeline_builder(vulkan_device* device,
+            std::shared_ptr<VkPipelineLayout> pipeline_layout);
+
+        vulkan_compute_pipeline_builder(
+            vulkan_compute_pipeline_builder const&) = delete;
+
+        vulkan_compute_pipeline_builder(
+            vulkan_compute_pipeline_builder&&) noexcept = delete;
+
+    public: // Destruction
+        ~vulkan_compute_pipeline_builder();
+
+    public: // Interface
+        [[nodiscard]] vulkan_pipeline build();
+
+        vulkan_compute_pipeline_builder& with_shader(
+            std::filesystem::path const& path,
+            std::string_view entry_point);
+
+    public: // Operators
+        vulkan_compute_pipeline_builder& operator=(
+            vulkan_compute_pipeline_builder const&) = delete;
+
+        vulkan_compute_pipeline_builder& operator=(
+            vulkan_compute_pipeline_builder&&) noexcept = delete;
+
+    private: // Helpers
+        void cleanup();
+
+    private: // Data
+        vulkan_device* device_{};
+        std::shared_ptr<VkPipelineLayout> pipeline_layout_;
+        VkShaderModule shader_module_{VK_NULL_HANDLE};
+        std::string shader_entry_point_;
+    };
 } // namespace vkrndr
 
 #endif // !VKRNDR_VULKAN_PIPELINE_INCLUDED

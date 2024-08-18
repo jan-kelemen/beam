@@ -226,7 +226,8 @@ void vkrndr::vulkan_renderer::draw(scene* const scene)
         .view = swap_chain_->image_view(image_index_),
         .format = swap_chain_->image_format(),
         .sample_count = VK_SAMPLE_COUNT_1_BIT,
-        .mip_levels = 0};
+        .mip_levels = 0,
+        .extent = extent()};
 
     scene->draw(target_image, command_buffer, extent());
 

@@ -27,6 +27,7 @@ vkrndr::vulkan_image vkrndr::create_image(vulkan_device const* const device,
     rv.format = format;
     rv.sample_count = samples;
     rv.mip_levels = mip_levels;
+    rv.extent = extent;
 
     VkImageCreateInfo image_info{};
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;

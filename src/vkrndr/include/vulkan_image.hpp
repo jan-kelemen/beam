@@ -22,6 +22,7 @@ namespace vkrndr
         VkFormat format{};
         VkSampleCountFlags sample_count{VK_SAMPLE_COUNT_1_BIT};
         uint32_t mip_levels{1};
+        VkExtent2D extent{};
     };
 
     void destroy(vulkan_device const* device, vulkan_image* image);

@@ -452,3 +452,62 @@ void vkrndr::vulkan_pipeline_builder::cleanup()
 
     pipeline_layout_.reset();
 }
+
+vkrndr::vulkan_compute_pipeline_builder::vulkan_compute_pipeline_builder(
+    vulkan_device* const device,
+    std::shared_ptr<VkPipelineLayout> pipeline_layout)
+    : device_{device}
+    , pipeline_layout_{std::move(pipeline_layout)}
+{
+}
+
+vkrndr::vulkan_compute_pipeline_builder::~vulkan_compute_pipeline_builder()
+{
+    cleanup();
+}
+
+vkrndr::vulkan_pipeline vkrndr::vulkan_compute_pipeline_builder::build()
+{
+    VkPipelineShaderStageCreateInfo stage_info{};
+    stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    stage_info.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    stage_info.module = shader_module_;
+    stage_info.pName = shader_entry_point_.c_str();
+
+    VkComputePipelineCreateInfo create_info{};
+    create_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    create_info.layout = *pipeline_layout_;
+    create_info.stage = stage_info;
+
+    VkPipeline pipeline; // NOLINT
+    check_result(vkCreateComputePipelines(device_->logical,
+        nullptr,
+        1,
+        &create_info,
+        nullptr,
+        &pipeline));
+
+    vulkan_pipeline rv{pipeline_layout_, pipeline};
+
+    cleanup();
+
+    return rv;
+}
+
+vkrndr::vulkan_compute_pipeline_builder&
+vkrndr::vulkan_compute_pipeline_builder::with_shader(
+    std::filesystem::path const& path,
+    std::string_view entry_point)
+{
+    shader_module_ = create_shader_module(device_->logical, read_file(path));
+    shader_entry_point_ = entry_point;
+
+    return *this;
+}
+
+void vkrndr::vulkan_compute_pipeline_builder::cleanup()
+{
+    vkDestroyShaderModule(device_->logical,
+        std::exchange(shader_module_, VK_NULL_HANDLE),
+        nullptr);
+}

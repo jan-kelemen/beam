@@ -3,9 +3,13 @@ add_executable(beam)
 target_sources(beam
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/application.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/raytracer.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/scene.hpp
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/beam.m.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/raytracer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/scene.cpp
 )
 
 target_include_directories(beam
@@ -20,6 +24,19 @@ target_link_libraries(beam
         niku
     PRIVATE
         project-options
+)
+add_dependencies(beam shaders)
+
+compile_shader(
+    SHADER
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/raytracer.comp
+    SPIRV
+        ${CMAKE_CURRENT_BINARY_DIR}/raytracer.comp.spv
+)
+
+add_custom_target(shaders
+    DEPENDS
+        ${CMAKE_CURRENT_BINARY_DIR}/raytracer.comp.spv
 )
 
 set_property(TARGET beam 
