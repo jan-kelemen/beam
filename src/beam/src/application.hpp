@@ -15,6 +15,7 @@ namespace vkrndr
 namespace beam
 {
     class scene;
+    class raytracer;
 } // namespace beam
 
 namespace beam
@@ -47,6 +48,7 @@ namespace beam
 
     private:
         std::unique_ptr<scene> scene_;
+        std::unique_ptr<raytracer> raytracer_;
     };
 } // namespace beam
 #endif

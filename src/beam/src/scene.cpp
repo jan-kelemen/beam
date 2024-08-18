@@ -18,7 +18,6 @@ beam::scene::scene(vkrndr::vulkan_device* const device,
     : device_{device}
     , renderer_{renderer}
     , color_image_{create_color_image(extent)}
-    , raytracer_{device, renderer, this}
 {
 }
 
@@ -26,18 +25,23 @@ beam::scene::~scene() { destroy(device_, &color_image_); }
 
 vkrndr::vulkan_image& beam::scene::color_image() { return color_image_; }
 
+void beam::scene::set_raytracer(raytracer* raytracer)
+{
+    raytracer_ = raytracer;
+}
+
 void beam::scene::resize(VkExtent2D const extent)
 {
     vkDeviceWaitIdle(device_->logical); // TODO-JK
 
     destroy(device_, &color_image_);
     color_image_ = create_color_image(extent);
-    raytracer_.on_resize();
+    raytracer_->on_resize();
 }
 
 void beam::scene::draw(vkrndr::vulkan_image const& target_image,
     VkCommandBuffer command_buffer,
-    VkExtent2D extent)
+    VkExtent2D const extent)
 {
     VkViewport const viewport{.x = 0.0f,
         .y = 0.0f,
@@ -60,7 +64,7 @@ void beam::scene::draw(vkrndr::vulkan_image const& target_image,
         VK_ACCESS_2_SHADER_STORAGE_WRITE_BIT,
         1);
 
-    raytracer_.draw(command_buffer);
+    raytracer_->draw(command_buffer);
 
     vkrndr::transition_image(color_image_.image,
         command_buffer,
@@ -116,11 +120,7 @@ void beam::scene::draw(vkrndr::vulkan_image const& target_image,
         1);
 }
 
-void beam::scene::draw_imgui()
-{
-    raytracer_.draw_imgui();
-    ImGui::ShowMetricsWindow();
-}
+void beam::scene::draw_imgui() { ImGui::ShowMetricsWindow(); }
 
 vkrndr::vulkan_image beam::scene::create_color_image(VkExtent2D const extent)
 {

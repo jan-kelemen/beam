@@ -1,6 +1,8 @@
 #ifndef BEAM_RAYTRACER_INCLUDED
 #define BEAM_RAYTRACER_INCLUDED
 
+#include <vulkan_buffer.hpp>
+
 #include <glm/vec3.hpp>
 
 #include <vulkan/vulkan_core.h>
@@ -48,6 +50,9 @@ namespace beam
         raytracer& operator=(raytracer&&) noexcept = delete;
 
     private:
+        void fill_world();
+
+    private:
         vkrndr::vulkan_device* device_;
         vkrndr::vulkan_renderer* renderer_;
         scene* scene_;
@@ -58,6 +63,8 @@ namespace beam
         std::unique_ptr<vkrndr::vulkan_pipeline> compute_pipeline_;
 
         glm::vec3 camera_position_{0.0f, 0.0f, 0.0f};
+
+        vkrndr::vulkan_buffer world_buffer_;
     };
 } // namespace beam
 

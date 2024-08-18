@@ -33,6 +33,8 @@ namespace beam
     public:
         [[nodiscard]] vkrndr::vulkan_image& color_image();
 
+        void set_raytracer(raytracer* raytracer);
+
     public: // vkrndr::scene overrides
         void resize(VkExtent2D const extent) override;
 
@@ -54,9 +56,9 @@ namespace beam
         vkrndr::vulkan_device* device_;
         vkrndr::vulkan_renderer* renderer_;
 
-        vkrndr::vulkan_image color_image_;
+        raytracer* raytracer_;
 
-        raytracer raytracer_;
+        vkrndr::vulkan_image color_image_;
     };
 } // namespace beam
 

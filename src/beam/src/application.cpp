@@ -1,4 +1,5 @@
 #include <application.hpp>
+#include <raytracer.hpp>
 #include <scene.hpp>
 
 #include <cppext_numeric.hpp>
@@ -29,8 +30,13 @@ beam::application::application(bool const debug)
     , scene_{std::make_unique<scene>(this->vulkan_device(),
           this->vulkan_renderer(),
           this->vulkan_renderer()->extent())}
+    , raytracer_{std::make_unique<raytracer>(this->vulkan_device(),
+          this->vulkan_renderer(),
+          scene_.get())}
 {
     this->vulkan_renderer()->imgui_layer(true);
+
+    scene_->set_raytracer(raytracer_.get());
 }
 
 beam::application::~application() { }

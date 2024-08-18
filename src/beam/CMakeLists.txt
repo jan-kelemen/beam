@@ -5,6 +5,7 @@ target_sources(beam
         ${CMAKE_CURRENT_SOURCE_DIR}/src/application.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/raytracer.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/scene.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/sphere.hpp
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/beam.m.cpp
