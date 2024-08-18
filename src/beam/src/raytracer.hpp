@@ -1,6 +1,8 @@
 #ifndef BEAM_RAYTRACER_INCLUDED
 #define BEAM_RAYTRACER_INCLUDED
 
+#include <glm/vec3.hpp>
+
 #include <vulkan/vulkan_core.h>
 
 #include <memory>
@@ -38,6 +40,8 @@ namespace beam
 
         void on_resize();
 
+        void draw_imgui();
+
     public:
         raytracer& operator=(raytracer const&) = delete;
 
@@ -52,6 +56,8 @@ namespace beam
         VkDescriptorSet descriptor_set_;
 
         std::unique_ptr<vkrndr::vulkan_pipeline> compute_pipeline_;
+
+        glm::vec3 camera_position_{0.0f, 0.0f, 0.0f};
     };
 } // namespace beam
 

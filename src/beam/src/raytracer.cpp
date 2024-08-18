@@ -10,12 +10,22 @@
 #include <vulkan_renderer.hpp>
 #include <vulkan_utility.hpp>
 
+#include <glm/gtc/type_ptr.hpp>
+#include <glm/vec3.hpp>
+
+#include <imgui.h>
+
 #include <vulkan/vulkan_core.h>
 
 #include <array>
 
 namespace
 {
+    struct [[nodiscard]] push_constants
+    {
+        glm::vec3 camera_position;
+    };
+
     [[nodiscard]] VkDescriptorSetLayout create_descriptor_set_layout(
         vkrndr::vulkan_device const* const device)
     {
@@ -81,6 +91,11 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
         vkrndr::vulkan_compute_pipeline_builder{device_,
             vkrndr::vulkan_pipeline_layout_builder{device_}
                 .add_descriptor_set_layout(descriptor_layout_)
+                .add_push_constants(VkPushConstantRange{
+                    .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
+                    .offset = 0,
+                    .size = sizeof(push_constants),
+                })
                 .build()}
             .with_shader("raytracer.comp.spv", "main")
             .build());
@@ -100,6 +115,17 @@ beam::raytracer::~raytracer()
 
 void beam::raytracer::draw(VkCommandBuffer command_buffer)
 {
+    auto& target_extent{scene_->color_image().extent};
+
+    push_constants const pc{.camera_position = camera_position_};
+
+    vkCmdPushConstants(command_buffer,
+        *compute_pipeline_->pipeline_layout,
+        VK_SHADER_STAGE_COMPUTE_BIT,
+        0,
+        sizeof(push_constants),
+        &pc);
+
     vkrndr::bind_pipeline(command_buffer,
         *compute_pipeline_,
         VK_PIPELINE_BIND_POINT_COMPUTE,
@@ -107,10 +133,10 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
         std::span{&descriptor_set_, 1});
 
     vkCmdDispatch(command_buffer,
-        static_cast<uint32_t>(std::ceil(
-            cppext::as_fp(scene_->color_image().extent.width) / 16.0f)),
-        static_cast<uint32_t>(std::ceil(
-            cppext::as_fp(scene_->color_image().extent.height) / 16.0f)),
+        static_cast<uint32_t>(
+            std::ceil(cppext::as_fp(target_extent.width) / 16.0f)),
+        static_cast<uint32_t>(
+            std::ceil(cppext::as_fp(target_extent.height) / 16.0f)),
         1);
 }
 
@@ -120,4 +146,14 @@ void beam::raytracer::on_resize()
         descriptor_set_,
         VkDescriptorImageInfo{.imageView = scene_->color_image().view,
             .imageLayout = VK_IMAGE_LAYOUT_GENERAL});
+}
+
+void beam::raytracer::draw_imgui()
+{
+    ImGui::Begin("Raytracer");
+    ImGui::SliderFloat3("Camera position",
+        glm::value_ptr(camera_position_),
+        -10.f,
+        10.f);
+    ImGui::End();
 }
