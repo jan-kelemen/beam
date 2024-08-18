@@ -21,7 +21,7 @@ namespace vkrndr
 
     void destroy(vulkan_device const* device, vulkan_buffer* buffer);
 
-    vulkan_buffer create_buffer(vulkan_device const* device,
+    vulkan_buffer create_buffer(vulkan_device const& device,
         VkDeviceSize size,
         VkBufferCreateFlags usage,
         VkMemoryPropertyFlags memory_properties);

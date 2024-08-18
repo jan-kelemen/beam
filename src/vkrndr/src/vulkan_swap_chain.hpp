@@ -12,6 +12,7 @@
 
 namespace vkrndr
 {
+    struct render_settings;
     struct vulkan_context;
     struct vulkan_device;
     struct vulkan_queue;
@@ -52,7 +53,8 @@ namespace vkrndr
     public: // Construction
         vulkan_swap_chain(vulkan_window* window,
             vulkan_context* context,
-            vulkan_device* device);
+            vulkan_device* device,
+            render_settings const* settings);
 
         vulkan_swap_chain(vulkan_swap_chain const&) = delete;
 
@@ -103,6 +105,7 @@ namespace vkrndr
         vulkan_window* window_{};
         vulkan_context* context_{};
         vulkan_device* device_{};
+        render_settings const* settings_{};
         vulkan_queue* present_queue_{};
         VkFormat image_format_{};
         uint32_t min_image_count_{};

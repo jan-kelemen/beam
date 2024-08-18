@@ -124,7 +124,7 @@ void beam::scene::draw_imgui()
 
 vkrndr::vulkan_image beam::scene::create_color_image(VkExtent2D const extent)
 {
-    return vkrndr::create_image_and_view(device_,
+    return vkrndr::create_image_and_view(*device_,
         extent,
         1,
         VK_SAMPLE_COUNT_1_BIT,

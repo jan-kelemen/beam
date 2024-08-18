@@ -1,6 +1,8 @@
 #ifndef NIKU_APPLICATION_INCLUDED
 #define NIKU_APPLICATION_INCLUDED
 
+#include <vkrndr_render_settings.hpp>
+
 #include <SDL2/SDL_events.h>
 #include <SDL2/SDL_video.h>
 
@@ -33,6 +35,8 @@ namespace niku
         bool centered{true};
         int width;
         int height;
+
+        vkrndr::render_settings render;
     };
 
     class [[nodiscard]] application

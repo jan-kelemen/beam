@@ -7,6 +7,7 @@
 #include <vkrndr_scene.hpp>
 #include <vulkan_buffer.hpp>
 #include <vulkan_commands.hpp>
+#include <vulkan_context.hpp>
 #include <vulkan_device.hpp>
 #include <vulkan_font.hpp>
 #include <vulkan_image.hpp>
@@ -33,8 +34,7 @@
 
 namespace
 {
-    VkDescriptorPool create_descriptor_pool(
-        vkrndr::vulkan_device const* const device)
+    VkDescriptorPool create_descriptor_pool(vkrndr::vulkan_device const& device)
     {
         constexpr auto count{vkrndr::count_cast(
             vkrndr::vulkan_swap_chain::max_frames_in_flight)};
@@ -65,43 +65,45 @@ namespace
 
         VkDescriptorPool rv{};
         vkrndr::check_result(
-            vkCreateDescriptorPool(device->logical, &pool_info, nullptr, &rv));
+            vkCreateDescriptorPool(device.logical, &pool_info, nullptr, &rv));
 
         return rv;
     }
 } // namespace
 
 vkrndr::vulkan_renderer::vulkan_renderer(vulkan_window* const window,
-    vulkan_context* const context,
-    vulkan_device* const device)
-    : window_{window}
-    , context_{context}
-    , device_{device}
+    render_settings const& settings,
+    bool const debug)
+    : render_settings_{settings}
+    , window_{window}
+    , context_{vkrndr::create_context(window, debug)}
+    , device_{vkrndr::create_device(context_)}
     , swap_chain_{std::make_unique<vulkan_swap_chain>(window_,
-          context_,
-          device_)}
+          &context_,
+          &device_,
+          &render_settings_)}
     , frame_data_{vulkan_swap_chain::max_frames_in_flight,
           vulkan_swap_chain::max_frames_in_flight}
-    , descriptor_pool_{create_descriptor_pool(device)}
+    , descriptor_pool_{create_descriptor_pool(device_)}
     , font_manager_{std::make_unique<font_manager>()}
     , gltf_manager_{std::make_unique<gltf_manager>(this)}
 {
     for (frame_data& fd : frame_data_.as_span())
     {
-        fd.present_queue = device_->present_queue;
+        fd.present_queue = device_.present_queue;
         fd.present_command_pool =
-            create_command_pool(device, fd.present_queue->family);
+            create_command_pool(device_, fd.present_queue->family);
 
-        if (device_->present_queue == device_->transfer_queue)
+        if (device_.present_queue == device_.transfer_queue)
         {
             fd.transfer_queue = fd.present_queue;
             fd.transfer_command_pool = fd.present_command_pool;
         }
         else
         {
-            fd.transfer_queue = device_->transfer_queue;
+            fd.transfer_queue = device_.transfer_queue;
             fd.transfer_command_pool =
-                create_command_pool(device, fd.transfer_queue->family);
+                create_command_pool(device_, fd.transfer_queue->family);
         }
     }
 }
@@ -114,16 +116,19 @@ vkrndr::vulkan_renderer::~vulkan_renderer()
     {
         if (fd.present_queue != fd.transfer_queue)
         {
-            vkDestroyCommandPool(device_->logical,
+            vkDestroyCommandPool(device_.logical,
                 fd.transfer_command_pool,
                 nullptr);
         }
-        vkDestroyCommandPool(device_->logical,
-            fd.present_command_pool,
-            nullptr);
+        vkDestroyCommandPool(device_.logical, fd.present_command_pool, nullptr);
     }
 
-    vkDestroyDescriptorPool(device_->logical, descriptor_pool_, nullptr);
+    vkDestroyDescriptorPool(device_.logical, descriptor_pool_, nullptr);
+
+    swap_chain_.reset();
+
+    destroy(&device_);
+    destroy(&context_);
 }
 
 VkFormat vkrndr::vulkan_renderer::image_format() const
@@ -157,8 +162,8 @@ void vkrndr::vulkan_renderer::imgui_layer(bool const state)
     if (state && !imgui_layer_)
     {
         imgui_layer_ = std::make_unique<imgui_render_layer>(window_,
-            context_,
-            device_,
+            &context_,
+            &device_,
             swap_chain_.get());
     }
 }
@@ -172,7 +177,7 @@ bool vkrndr::vulkan_renderer::begin_frame(scene* const scene)
             return false;
         }
 
-        vkDeviceWaitIdle(device_->logical);
+        vkDeviceWaitIdle(device_.logical);
         swap_chain_->recreate();
         scene->resize(extent());
         swap_chain_refresh.store(false);
@@ -303,7 +308,7 @@ vkrndr::vulkan_image vkrndr::vulkan_renderer::transfer_image(
     vulkan_image rv{
         transfer_buffer_to_image(staging_buffer, extent, format, mip_levels)};
 
-    destroy(device_, &staging_buffer);
+    destroy(&device_, &staging_buffer);
 
     return rv;
 }
@@ -418,7 +423,7 @@ vkrndr::vulkan_font vkrndr::vulkan_renderer::load_font(
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
         VK_IMAGE_ASPECT_COLOR_BIT)};
 
-    vulkan_queue* const queue{device_->present_queue};
+    vulkan_queue* const queue{device_.present_queue};
 
     VkCommandBuffer present_queue_buffer; // NOLINT
     begin_single_time_commands(device_,
@@ -440,7 +445,7 @@ vkrndr::vulkan_font vkrndr::vulkan_renderer::load_font(
         std::span{&present_queue_buffer, 1},
         frame_data_->present_command_pool);
 
-    destroy(device_, &staging_buffer);
+    destroy(&device_, &staging_buffer);
 
     return {std::move(font_bitmap.bitmaps),
         font_bitmap.bitmap_width,

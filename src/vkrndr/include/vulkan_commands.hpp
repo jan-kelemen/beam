@@ -23,18 +23,18 @@ namespace vkrndr
         VkAccessFlags2 dst_access_mask,
         uint32_t mip_levels);
 
-    void create_command_buffers(vkrndr::vulkan_device const* device,
+    void create_command_buffers(vkrndr::vulkan_device const& device,
         VkCommandPool command_pool,
         uint32_t count,
         VkCommandBufferLevel level,
         std::span<VkCommandBuffer> buffers);
 
-    void begin_single_time_commands(vulkan_device const* device,
+    void begin_single_time_commands(vulkan_device const& device,
         VkCommandPool command_pool,
         uint32_t count,
         std::span<VkCommandBuffer> buffers);
 
-    void end_single_time_commands(vulkan_device const* device,
+    void end_single_time_commands(vulkan_device const& device,
         VkQueue queue,
         std::span<VkCommandBuffer> command_buffers,
         VkCommandPool command_pool);
@@ -66,7 +66,7 @@ namespace vkrndr
         VkCommandBuffer command_buffer,
         uint32_t mip_levels);
 
-    void generate_mipmaps(vulkan_device const* device,
+    void generate_mipmaps(vulkan_device const& device,
         VkImage image,
         VkCommandBuffer command_buffer,
         VkFormat format,

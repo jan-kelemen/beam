@@ -7,6 +7,7 @@ target_sources(vkrndr
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_camera.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_render_pass.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_scene.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_render_settings.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vulkan_buffer.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vulkan_commands.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vulkan_context.hpp

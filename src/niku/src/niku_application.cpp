@@ -55,8 +55,6 @@ public:
     sdl_guard guard;
     sdl_window window;
 
-    vkrndr::vulkan_context context;
-    vkrndr::vulkan_device device;
     std::unique_ptr<vkrndr::vulkan_renderer> renderer;
 
     std::optional<float> fixed_update_interval;
@@ -71,20 +69,14 @@ niku::application::impl::impl(startup_params const& params)
           params.centered,
           params.width,
           params.height}
-    , context{vkrndr::create_context(&window, params.init_subsystems.debug)}
-    , device{vkrndr::create_device(context)}
-    , renderer{
-          std::make_unique<vkrndr::vulkan_renderer>(&window, &context, &device)}
+    , renderer{std::make_unique<vkrndr::vulkan_renderer>(&window,
+          params.render,
+          params.init_subsystems.debug)}
 {
     renderer->imgui_layer(params.init_subsystems.debug);
 }
 
-niku::application::impl::~impl()
-{
-    renderer.reset();
-    destroy(&device);
-    destroy(&context);
-}
+niku::application::impl::~impl() { renderer.reset(); }
 
 bool niku::application::impl::is_current_window_event(
     SDL_Event const& event) const
@@ -176,7 +168,7 @@ void niku::application::run()
         end_frame();
     }
 
-    vkDeviceWaitIdle(impl_->device.logical);
+    vkDeviceWaitIdle(impl_->renderer->device().logical);
 
     on_shutdown();
 }
@@ -210,7 +202,7 @@ bool niku::application::debug_layer() const
 
 vkrndr::vulkan_device* niku::application::vulkan_device()
 {
-    return &impl_->device;
+    return &impl_->renderer->device();
 }
 
 vkrndr::vulkan_renderer* niku::application::vulkan_renderer()

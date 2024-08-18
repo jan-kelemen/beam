@@ -69,7 +69,7 @@ vkrndr::queue_families vkrndr::find_queue_families(
     return indices;
 }
 
-VkCommandPool vkrndr::create_command_pool(vulkan_device const* const device,
+VkCommandPool vkrndr::create_command_pool(vulkan_device const& device,
     uint32_t const queue_family)
 {
     VkCommandPoolCreateInfo pool_info{};
@@ -78,8 +78,7 @@ VkCommandPool vkrndr::create_command_pool(vulkan_device const* const device,
     pool_info.queueFamilyIndex = queue_family;
 
     VkCommandPool rv; // NOLINT
-    check_result(
-        vkCreateCommandPool(device->logical, &pool_info, nullptr, &rv));
+    check_result(vkCreateCommandPool(device.logical, &pool_info, nullptr, &rv));
 
     return rv;
 }

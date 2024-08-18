@@ -32,7 +32,7 @@ namespace vkrndr
     queue_families find_queue_families(VkPhysicalDevice physical_device,
         VkSurfaceKHR surface);
 
-    [[nodiscard]] VkCommandPool create_command_pool(vulkan_device const* device,
+    [[nodiscard]] VkCommandPool create_command_pool(vulkan_device const& device,
         uint32_t queue_family);
 
 } // namespace vkrndr

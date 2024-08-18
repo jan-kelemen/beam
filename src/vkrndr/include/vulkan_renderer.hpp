@@ -1,6 +1,10 @@
 #ifndef VKRNDR_VULKAN_RENDERER_INCLUDED
 #define VKRNDR_VULKAN_RENDERER_INCLUDED
 
+#include <vkrndr_render_settings.hpp>
+#include <vulkan_context.hpp>
+#include <vulkan_device.hpp>
+
 #include <cppext_cycled_buffer.hpp>
 
 #include <vulkan/vulkan_core.h>
@@ -35,8 +39,8 @@ namespace vkrndr
     {
     public: // Construction
         vulkan_renderer(vulkan_window* window,
-            vulkan_context* context,
-            vulkan_device* device);
+            render_settings const& settings,
+            bool debug);
 
         vulkan_renderer(vulkan_renderer const&) = delete;
 
@@ -48,6 +52,10 @@ namespace vkrndr
     public: // Interface
         [[nodiscard]] constexpr VkDescriptorPool
         descriptor_pool() const noexcept;
+
+        [[nodiscard]] constexpr vulkan_device& device() noexcept;
+
+        [[nodiscard]] constexpr vulkan_device const& device() const noexcept;
 
         [[nodiscard]] VkFormat image_format() const;
 
@@ -114,9 +122,11 @@ namespace vkrndr
             bool transfer_only);
 
     private: // Data
+        render_settings render_settings_;
+
         vulkan_window* window_;
-        vulkan_context* context_;
-        vulkan_device* device_;
+        vulkan_context context_;
+        vulkan_device device_;
 
         std::unique_ptr<vulkan_swap_chain> swap_chain_;
 
@@ -136,6 +146,18 @@ constexpr VkDescriptorPool
 vkrndr::vulkan_renderer::descriptor_pool() const noexcept
 {
     return descriptor_pool_;
+}
+
+[[nodiscard]] constexpr vkrndr::vulkan_device&
+vkrndr::vulkan_renderer::device() noexcept
+{
+    return device_;
+}
+
+[[nodiscard]] constexpr vkrndr::vulkan_device const&
+vkrndr::vulkan_renderer::device() const noexcept
+{
+    return device_;
 }
 
 #endif // !VKRNDR_VULKAN_RENDERER_INCLUDED

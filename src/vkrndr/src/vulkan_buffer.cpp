@@ -13,7 +13,7 @@ void vkrndr::destroy(vulkan_device const* device, vulkan_buffer* const buffer)
     }
 }
 
-vkrndr::vulkan_buffer vkrndr::create_buffer(vulkan_device const* const device,
+vkrndr::vulkan_buffer vkrndr::create_buffer(vulkan_device const& device,
     VkDeviceSize const size,
     VkBufferCreateFlags const usage,
     VkMemoryPropertyFlags const memory_properties)
@@ -37,7 +37,7 @@ vkrndr::vulkan_buffer vkrndr::create_buffer(vulkan_device const* const device,
         vma_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
     }
 
-    check_result(vmaCreateBuffer(device->allocator,
+    check_result(vmaCreateBuffer(device.allocator,
         &buffer_info,
         &vma_info,
         &rv.buffer,

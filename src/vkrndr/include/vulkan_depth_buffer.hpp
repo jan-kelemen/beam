@@ -12,7 +12,7 @@ namespace vkrndr
 
 namespace vkrndr
 {
-    vulkan_image create_depth_buffer(vulkan_device* device,
+    vulkan_image create_depth_buffer(vulkan_device const& device,
         VkExtent2D extent,
         bool with_stencil_component);
 

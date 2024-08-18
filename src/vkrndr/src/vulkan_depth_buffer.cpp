@@ -82,16 +82,16 @@ bool vkrndr::has_stencil_component(VkFormat format)
         format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
 
-vkrndr::vulkan_image vkrndr::create_depth_buffer(vulkan_device* const device,
+vkrndr::vulkan_image vkrndr::create_depth_buffer(vulkan_device const& device,
     VkExtent2D const extent,
     bool const with_stencil_component)
 {
     VkFormat const depth_format{
-        find_depth_format(device->physical, with_stencil_component)};
+        find_depth_format(device.physical, with_stencil_component)};
     return create_image_and_view(device,
         extent,
         1,
-        device->max_msaa_samples,
+        device.max_msaa_samples,
         depth_format,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

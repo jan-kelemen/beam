@@ -44,7 +44,7 @@ void vkrndr::transition_image(VkImage const image,
     vkCmdPipelineBarrier2(command_buffer, &dependency);
 }
 
-void vkrndr::create_command_buffers(vulkan_device const* const device,
+void vkrndr::create_command_buffers(vulkan_device const& device,
     VkCommandPool const command_pool,
     uint32_t const count,
     VkCommandBufferLevel const level,
@@ -59,10 +59,10 @@ void vkrndr::create_command_buffers(vulkan_device const* const device,
     alloc_info.commandBufferCount = count;
 
     check_result(
-        vkAllocateCommandBuffers(device->logical, &alloc_info, buffers.data()));
+        vkAllocateCommandBuffers(device.logical, &alloc_info, buffers.data()));
 }
 
-void vkrndr::begin_single_time_commands(vulkan_device const* const device,
+void vkrndr::begin_single_time_commands(vulkan_device const& device,
     VkCommandPool const command_pool,
     uint32_t const count,
     std::span<VkCommandBuffer> const buffers)
@@ -83,7 +83,7 @@ void vkrndr::begin_single_time_commands(vulkan_device const* const device,
     }
 }
 
-void vkrndr::end_single_time_commands(vulkan_device const* const device,
+void vkrndr::end_single_time_commands(vulkan_device const& device,
     VkQueue const queue,
     std::span<VkCommandBuffer> const command_buffers,
     VkCommandPool const command_pool)
@@ -102,7 +102,7 @@ void vkrndr::end_single_time_commands(vulkan_device const* const device,
     check_result(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
     check_result(vkQueueWaitIdle(queue));
 
-    vkFreeCommandBuffers(device->logical,
+    vkFreeCommandBuffers(device.logical,
         command_pool,
         submit_info.commandBufferCount,
         submit_info.pCommandBuffers);
@@ -220,7 +220,7 @@ void vkrndr::wait_for_transfer_write_completed(VkImage image,
         mip_levels);
 }
 
-void vkrndr::generate_mipmaps(vulkan_device const* const device,
+void vkrndr::generate_mipmaps(vulkan_device const& device,
     VkImage image,
     VkCommandBuffer command_buffer,
     VkFormat const format,
@@ -228,7 +228,7 @@ void vkrndr::generate_mipmaps(vulkan_device const* const device,
     uint32_t const mip_levels)
 {
     VkFormatProperties properties;
-    vkGetPhysicalDeviceFormatProperties(device->physical, format, &properties);
+    vkGetPhysicalDeviceFormatProperties(device.physical, format, &properties);
     if (!(properties.optimalTilingFeatures &
             VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT))
     {

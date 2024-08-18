@@ -14,7 +14,7 @@ void vkrndr::destroy(vulkan_device const* device, vulkan_image* const image)
     }
 }
 
-vkrndr::vulkan_image vkrndr::create_image(vulkan_device const* const device,
+vkrndr::vulkan_image vkrndr::create_image(vulkan_device const& device,
     VkExtent2D const extent,
     uint32_t const mip_levels,
     VkSampleCountFlagBits const samples,
@@ -53,7 +53,7 @@ vkrndr::vulkan_image vkrndr::create_image(vulkan_device const* const device,
         vma_info.flags = VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT;
     }
 
-    check_result(vmaCreateImage(device->allocator,
+    check_result(vmaCreateImage(device.allocator,
         &image_info,
         &vma_info,
         &rv.image,
@@ -64,7 +64,7 @@ vkrndr::vulkan_image vkrndr::create_image(vulkan_device const* const device,
 }
 
 [[nodiscard]]
-VkImageView vkrndr::create_image_view(vulkan_device const* const device,
+VkImageView vkrndr::create_image_view(vulkan_device const& device,
     VkImage const image,
     VkFormat const format,
     VkImageAspectFlags const aspect_flags,
@@ -83,12 +83,11 @@ VkImageView vkrndr::create_image_view(vulkan_device const* const device,
 
     VkImageView imageView; // NOLINT
     check_result(
-        vkCreateImageView(device->logical, &view_info, nullptr, &imageView));
+        vkCreateImageView(device.logical, &view_info, nullptr, &imageView));
     return imageView;
 }
 
-vkrndr::vulkan_image vkrndr::create_image_and_view(
-    vulkan_device const* const device,
+vkrndr::vulkan_image vkrndr::create_image_and_view(vulkan_device const& device,
     VkExtent2D const extent,
     uint32_t const mip_levels,
     VkSampleCountFlagBits const samples,

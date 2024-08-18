@@ -24,7 +24,8 @@ beam::application::application(bool const debug)
               SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI),
           .centered = true,
           .width = 512,
-          .height = 512}}
+          .height = 512,
+          .render = {.preferred_swapchain_format = VK_FORMAT_B8G8R8_UNORM}}}
     , scene_{std::make_unique<scene>(this->vulkan_device(),
           this->vulkan_renderer(),
           this->vulkan_renderer()->extent())}

@@ -1,6 +1,7 @@
 #include <vulkan_swap_chain.hpp>
 
 #include <global_data.hpp>
+#include <vkrndr_render_settings.hpp>
 #include <vulkan_context.hpp>
 #include <vulkan_device.hpp>
 #include <vulkan_image.hpp>
@@ -22,12 +23,14 @@
 namespace
 {
     [[nodiscard]] VkSurfaceFormatKHR choose_swap_surface_format(
-        std::span<VkSurfaceFormatKHR const> available_formats)
+        std::span<VkSurfaceFormatKHR const> available_formats,
+        vkrndr::render_settings const& settings)
     {
         if (auto const it{std::ranges::find_if(available_formats,
-                [](VkSurfaceFormatKHR const& format)
+                [&settings](VkSurfaceFormatKHR const& format)
                 {
-                    return format.format == VK_FORMAT_B8G8R8A8_SRGB &&
+                    return format.format ==
+                        settings.preferred_swapchain_format &&
                         format.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
                 })};
             it != available_formats.end())
@@ -39,12 +42,13 @@ namespace
     }
 
     [[nodiscard]] VkPresentModeKHR choose_swap_present_mode(
-        std::span<VkPresentModeKHR const> available_present_modes)
+        std::span<VkPresentModeKHR const> available_present_modes,
+        vkrndr::render_settings const& settings)
     {
-        constexpr auto preferred_mode{VK_PRESENT_MODE_MAILBOX_KHR};
-        return std::ranges::find(available_present_modes, preferred_mode) !=
+        return std::ranges::find(available_present_modes,
+                   settings.preferred_present_mode) !=
                 available_present_modes.end()
-            ? preferred_mode
+            ? settings.preferred_present_mode
             : VK_PRESENT_MODE_FIFO_KHR;
     }
 } // namespace
@@ -98,12 +102,14 @@ vkrndr::query_swap_chain_support(VkPhysicalDevice device, VkSurfaceKHR surface)
     return rv;
 }
 
-vkrndr::vulkan_swap_chain::vulkan_swap_chain(vulkan_window* window,
-    vulkan_context* context,
-    vulkan_device* device)
+vkrndr::vulkan_swap_chain::vulkan_swap_chain(vulkan_window* const window,
+    vulkan_context* const context,
+    vulkan_device* const device,
+    render_settings const* const settings)
     : window_{window}
     , context_{context}
     , device_{device}
+    , settings_{settings}
     , present_queue_{device->present_queue}
 {
     create_swap_frames();
@@ -196,9 +202,9 @@ void vkrndr::vulkan_swap_chain::create_swap_frames()
         query_swap_chain_support(device_->physical, context_->surface)};
 
     VkPresentModeKHR const present_mode{
-        choose_swap_present_mode(swap_details.present_modes)};
+        choose_swap_present_mode(swap_details.present_modes, *settings_)};
     VkSurfaceFormatKHR const surface_format{
-        choose_swap_surface_format(swap_details.surface_formats)};
+        choose_swap_surface_format(swap_details.surface_formats, *settings_)};
 
     image_format_ = surface_format.format;
     extent_ = window_->swap_extent(swap_details.capabilities);
@@ -250,7 +256,7 @@ void vkrndr::vulkan_swap_chain::create_swap_frames()
         auto& frame{frames_[i]};
 
         frame.image = images[i];
-        frame.image_view = create_image_view(device_,
+        frame.image_view = create_image_view(*device_,
             images[i],
             image_format_,
             VK_IMAGE_ASPECT_COLOR_BIT,

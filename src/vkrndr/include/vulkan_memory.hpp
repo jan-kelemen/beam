@@ -45,10 +45,10 @@ namespace vkrndr
         }
     };
 
-    mapped_memory map_memory(vulkan_device* device,
+    mapped_memory map_memory(vulkan_device const& device,
         VmaAllocation const& allocation);
 
-    void unmap_memory(vulkan_device* device, mapped_memory* memory);
+    void unmap_memory(vulkan_device const& device, mapped_memory* memory);
 } // namespace vkrndr
 
 #endif // !VKRNDR_VULKAN_MEMORY_INCLUDED

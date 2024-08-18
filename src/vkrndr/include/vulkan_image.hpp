@@ -27,7 +27,7 @@ namespace vkrndr
 
     void destroy(vulkan_device const* device, vulkan_image* image);
 
-    vulkan_image create_image(vulkan_device const* device,
+    vulkan_image create_image(vulkan_device const& device,
         VkExtent2D extent,
         uint32_t mip_levels,
         VkSampleCountFlagBits samples,
@@ -36,13 +36,13 @@ namespace vkrndr
         VkImageUsageFlags usage,
         VkMemoryPropertyFlags properties);
 
-    [[nodiscard]] VkImageView create_image_view(vulkan_device const* device,
+    [[nodiscard]] VkImageView create_image_view(vulkan_device const& device,
         VkImage image,
         VkFormat format,
         VkImageAspectFlags aspect_flags,
         uint32_t mip_levels);
 
-    vulkan_image create_image_and_view(vulkan_device const* device,
+    vulkan_image create_image_and_view(vulkan_device const& device,
         VkExtent2D extent,
         uint32_t mip_levels,
         VkSampleCountFlagBits samples,

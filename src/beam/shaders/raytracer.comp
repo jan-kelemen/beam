@@ -10,7 +10,7 @@ layout(rgba32f, set = 0, binding = 0) uniform image2D image;
 
 vec4 rayColor(vec3 direction) {
     vec3 normDirection = normalize(direction);
-    float alpha = 0.9 * (normDirection.y + 1.0);
+    float alpha = 0.5 * (normDirection.y + 1.0);
     return (1.0 - alpha) * vec4(1) + alpha * vec4(0.5, 0.7, 1.0, 1.0);
 }
 
