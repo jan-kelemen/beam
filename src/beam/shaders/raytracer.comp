@@ -5,6 +5,7 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout(push_constant) uniform PushConsts {
     vec3 cameraPosition;
     uint worldCount;
+    uint samplesPerPixel;
 } pc;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
@@ -42,6 +43,17 @@ struct Interval
     float max;
 };
 
+Interval empty = Interval(1.0 / 0.0, -1.0 / 0.0);
+Interval universe = Interval(-1.0 / 0.0, 1.0 / 0.0);
+
+bool surrounds(Interval i, float x) {
+    return i.min < x && x < i.max;
+}
+
+bool contains(Interval i, float x) {
+    return i.min <= x && x <= i.max;
+}
+
 bool hitSphere(Sphere s, Ray r, Interval inter, inout HitRecord rec) {
     vec3 oc = s.center - r.origin;
 
@@ -58,9 +70,9 @@ bool hitSphere(Sphere s, Ray r, Interval inter, inout HitRecord rec) {
 
     float root = (h - sqrtd) / a;
 
-    if (root <= inter.min || inter.max <= root) {
+    if (!surrounds(inter, root)) {
         root = (h + sqrtd) / a;
-        if (root <= inter.min || inter.max <= root) {
+        if (!surrounds(inter, root)) {
             return false;
         }
     }
@@ -101,6 +113,33 @@ vec4 rayColor(Ray r) {
     return (1.0 - alpha) * vec4(1) + alpha * vec4(0.5, 0.7, 1.0, 1.0);
 }
 
+// https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
+uint rng_state;
+uint randPCG()
+{
+    uint state = rng_state;
+    rng_state = rng_state * 747796405u + 2891336453u;
+    uint word = ((state >> ((state >> 28u) + 4u)) ^ state) * 277803737u;
+    return (word >> 22u) ^ word;
+}
+
+vec3 sampleSquare() {
+    uint uintMax = ~0;
+    return vec3(float(randPCG()) / uintMax - 0.5, float(randPCG()) / uintMax - 0.5, 0);
+}
+
+Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 pixelDeltaV) {
+    vec3 offset = sampleSquare();
+    vec3 texsample = pixel00
+        + (texelCoord.x + offset.x) * pixelDeltaU
+        + (texelCoord.y + offset.y) * pixelDeltaV;
+
+    vec3 origin = center;
+    vec3 direction = texsample - origin;
+
+    return Ray(origin, direction);
+}
+
 void main() 
 {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
@@ -125,11 +164,13 @@ void main()
 
     if(texelCoord.x < imageSize.x && texelCoord.y < imageSize.y)
     {
-        vec3 pixelCenter = pixel00 + (texelCoord.x * pixelDeltaU) + (texelCoord.y * pixelDeltaV);
-
-        vec3 rayDirection = pixelCenter - pc.cameraPosition;
-        Ray r = Ray(pc.cameraPosition, rayDirection);
+        vec4 color = vec4(0);
+        for (uint i = 0; i != pc.samplesPerPixel; ++i) {
+            Ray r = getRay(texelCoord, pc.cameraPosition, pixel00, pixelDeltaU, pixelDeltaV);
+            color += rayColor(r);
+        }
+        color /= pc.samplesPerPixel;
     
-        imageStore(image, texelCoord, rayColor(r));
+        imageStore(image, texelCoord, color);
     }
 }

@@ -120,7 +120,11 @@ void beam::scene::draw(vkrndr::vulkan_image const& target_image,
         1);
 }
 
-void beam::scene::draw_imgui() { ImGui::ShowMetricsWindow(); }
+void beam::scene::draw_imgui()
+{
+    ImGui::ShowMetricsWindow();
+    raytracer_->draw_imgui();
+}
 
 vkrndr::vulkan_image beam::scene::create_color_image(VkExtent2D const extent)
 {

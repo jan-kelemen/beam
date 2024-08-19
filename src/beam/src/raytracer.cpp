@@ -27,6 +27,7 @@ namespace
     {
         glm::vec3 camera_position;
         uint32_t world_count;
+        uint32_t samples_per_pixel;
     };
 
     [[nodiscard]] VkDescriptorSetLayout create_descriptor_set_layout(
@@ -145,7 +146,8 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
     auto& target_extent{scene_->color_image().extent};
 
     push_constants const pc{.camera_position = camera_position_,
-        .world_count = 2};
+        .world_count = 2,
+        .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_)};
 
     vkCmdPushConstants(command_buffer,
         *compute_pipeline_->pipeline_layout,
@@ -186,6 +188,7 @@ void beam::raytracer::draw_imgui()
         glm::value_ptr(camera_position_),
         -10.f,
         10.f);
+    ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 10);
     ImGui::End();
 }
 
