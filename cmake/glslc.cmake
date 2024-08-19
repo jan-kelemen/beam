@@ -13,7 +13,10 @@ function(compile_shader)
 
     add_custom_command(
         OUTPUT ${GLSLC_SHADER_SPIRV}
-        COMMAND ${GLSLC_EXE} ${GLSLC_SHADER_SHADER} -o ${GLSLC_SHADER_SPIRV}
+        COMMAND ${GLSLC_EXE}
+            $<$<OR:$<CONFIG:RelWithDebInfo>,$<CONFIG:Release>>:-O> # Optimize in RelWithDebInfo and Release
+            $<$<OR:$<CONFIG:Debug>,$<CONFIG:RelWithDebInfo>>:-g> # Add debug information in Debug or RelWithDebInfo
+            ${GLSLC_SHADER_SHADER} -o ${GLSLC_SHADER_SPIRV}
         DEPENDS ${GLSLC_SHADER_SHADER}
     )
 endfunction()
