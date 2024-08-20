@@ -10,7 +10,9 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout(push_constant) uniform PushConsts {
     vec3 cameraPosition;
     uint worldCount;
+    vec3 cameraFront;
     uint materialCount;
+    vec3 cameraUp;
     uint samplesPerPixel;
     uint maxDepth;
 } pc;
@@ -296,18 +298,22 @@ void main()
 
     float aspectRatio = float(imageSize.x) / imageSize.y;
 
-    float focalLength = 1.0;
+    float focalLength = length(pc.cameraPosition - pc.cameraFront);
+    vec3 w = normalize(pc.cameraPosition - pc.cameraFront);
+    vec3 u = normalize(cross(pc.cameraUp, w));
+    vec3 v = cross(w, u);
+
     float viewportHeight = 2.0;
     float viewportWidth = viewportHeight * aspectRatio;
 
-    vec3 viewportU = vec3(viewportWidth, 0, 0);
-    vec3 viewportV = vec3(0, -viewportHeight, 0);
+    vec3 viewportU = viewportWidth * u;
+    vec3 viewportV = viewportHeight * -v;
 
     vec3 pixelDeltaU = viewportU / imageSize.x;
     vec3 pixelDeltaV = viewportV / imageSize.y;
 
     vec3 viewportUpperLeft = pc.cameraPosition
-                             - vec3(0, 0, focalLength) - viewportU / 2 - viewportV /2;
+                             - focalLength * w - viewportU / 2 - viewportV / 2;
 
     vec3 pixel00 = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
 

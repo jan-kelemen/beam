@@ -27,6 +27,8 @@ beam::application::application(bool const debug)
           .width = 512,
           .height = 512,
           .render = {.preferred_present_mode = VK_PRESENT_MODE_FIFO_KHR}}}
+    , mouse_{debug}
+    , camera_controller_{&camera_, &mouse_}
     , scene_{std::make_unique<scene>(this->vulkan_device(),
           this->vulkan_renderer(),
           this->vulkan_renderer()->extent())}
@@ -36,6 +38,9 @@ beam::application::application(bool const debug)
 {
     this->vulkan_renderer()->imgui_layer(true);
 
+    camera_.resize({512, 512});
+    camera_.update();
+
     scene_->set_raytracer(raytracer_.get());
 }
 
@@ -43,6 +48,8 @@ beam::application::~application() { }
 
 bool beam::application::handle_event(SDL_Event const& event)
 {
+    camera_controller_.handle_event(event);
+
     if (event.type == SDL_WINDOWEVENT)
     {
         auto const& window{event.window};
@@ -56,9 +63,25 @@ bool beam::application::handle_event(SDL_Event const& event)
         return true;
     }
 
+    if (event.type == SDL_KEYDOWN)
+    {
+        auto const& keyboard{event.key};
+        if (keyboard.keysym.scancode == SDL_SCANCODE_F3)
+        {
+            mouse_.set_capture(!mouse_.captured());
+        }
+
+        return true;
+    }
+
     return false;
 }
 
-void beam::application::update([[maybe_unused]] float delta_time) { }
+void beam::application::update(float delta_time)
+{
+    camera_controller_.update(delta_time);
+
+    raytracer_->update(camera_);
+}
 
 vkrndr::scene* beam::application::render_scene() { return scene_.get(); }

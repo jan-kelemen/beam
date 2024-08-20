@@ -1,5 +1,6 @@
 #include <raytracer.hpp>
 
+#include <perspective_camera.hpp>
 #include <scene.hpp>
 #include <sphere.hpp>
 
@@ -27,7 +28,9 @@ namespace
     {
         glm::vec3 camera_position;
         uint32_t world_count;
+        glm::vec3 camera_front;
         uint32_t material_count;
+        glm::vec3 camera_up;
         uint32_t samples_per_pixel;
         uint32_t max_depth;
     };
@@ -169,13 +172,22 @@ beam::raytracer::~raytracer()
     vkDestroyDescriptorSetLayout(device_->logical, descriptor_layout_, nullptr);
 }
 
+void beam::raytracer::update(perspective_camera const& camera)
+{
+    camera_position_ = camera.position();
+    camera_front_ = camera.front_direction();
+    camera_up_ = camera.up_direction();
+}
+
 void beam::raytracer::draw(VkCommandBuffer command_buffer)
 {
     auto& target_extent{scene_->color_image().extent};
 
     push_constants const pc{.camera_position = camera_position_,
         .world_count = 4,
+        .camera_front = camera_position_ + camera_front_,
         .material_count = 4,
+        .camera_up = camera_up_,
         .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_),
         .max_depth = cppext::narrow<uint32_t>(max_depth_)};
 
@@ -217,10 +229,6 @@ void beam::raytracer::on_resize()
 void beam::raytracer::draw_imgui()
 {
     ImGui::Begin("Raytracer");
-    ImGui::SliderFloat3("Camera position",
-        glm::value_ptr(camera_position_),
-        -10.f,
-        10.f);
     ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 100);
     ImGui::SliderInt("Max depth", &max_depth_, 0, 100);
     ImGui::End();

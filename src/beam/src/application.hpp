@@ -1,7 +1,11 @@
 #ifndef BEAM_APPLICATION_INCLUDED
 #define BEAM_APPLICATION_INCLUDED
 
+#include <free_camera_controller.hpp>
+#include <perspective_camera.hpp>
+
 #include <niku_application.hpp>
+#include <niku_mouse.hpp>
 
 #include <SDL2/SDL_events.h>
 
@@ -47,6 +51,11 @@ namespace beam
         [[nodiscard]] vkrndr::scene* render_scene() override;
 
     private:
+        perspective_camera camera_;
+        niku::mouse mouse_;
+
+        free_camera_controller camera_controller_;
+
         std::unique_ptr<scene> scene_;
         std::unique_ptr<raytracer> raytracer_;
     };

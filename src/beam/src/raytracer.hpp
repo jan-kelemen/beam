@@ -19,6 +19,7 @@ namespace vkrndr
 namespace beam
 {
     class scene;
+    class perspective_camera;
 } // namespace beam
 
 namespace beam
@@ -38,6 +39,8 @@ namespace beam
         ~raytracer();
 
     public:
+        void update(perspective_camera const& camera);
+
         void draw(VkCommandBuffer command_buffer);
 
         void on_resize();
@@ -63,9 +66,12 @@ namespace beam
 
         std::unique_ptr<vkrndr::vulkan_pipeline> compute_pipeline_;
 
-        glm::vec3 camera_position_{0.0f, 0.0f, 0.0f};
         int samples_per_pixel_{4};
         int max_depth_{50};
+
+        glm::vec3 camera_position_;
+        glm::vec3 camera_front_;
+        glm::vec3 camera_up_;
 
         vkrndr::vulkan_buffer world_buffer_;
         vkrndr::vulkan_buffer material_buffer_;
