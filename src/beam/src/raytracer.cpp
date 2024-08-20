@@ -27,6 +27,7 @@ namespace
     {
         glm::vec3 camera_position;
         uint32_t world_count;
+        uint32_t material_count;
         uint32_t samples_per_pixel;
         uint32_t max_depth;
     };
@@ -46,7 +47,16 @@ namespace
         world_buffer_binding.descriptorCount = 1;
         world_buffer_binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
 
-        std::array const bindings{target_image_binding, world_buffer_binding};
+        VkDescriptorSetLayoutBinding material_buffer_binding{};
+        material_buffer_binding.binding = 2;
+        material_buffer_binding.descriptorType =
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        material_buffer_binding.descriptorCount = 1;
+        material_buffer_binding.stageFlags = VK_SHADER_STAGE_COMPUTE_BIT;
+
+        std::array const bindings{target_image_binding,
+            world_buffer_binding,
+            material_buffer_binding};
 
         VkDescriptorSetLayoutCreateInfo layout_info{};
         layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -65,7 +75,8 @@ namespace
     void bind_descriptor_set(vkrndr::vulkan_device const* const device,
         VkDescriptorSet const& descriptor_set,
         VkDescriptorImageInfo const target_image_info,
-        VkDescriptorBufferInfo const world_buffer_info)
+        VkDescriptorBufferInfo const world_buffer_info,
+        VkDescriptorBufferInfo const material_buffer_info)
     {
         VkWriteDescriptorSet target_image_write{};
         target_image_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -85,8 +96,19 @@ namespace
         world_buffer_write.descriptorCount = 1;
         world_buffer_write.pBufferInfo = &world_buffer_info;
 
+        VkWriteDescriptorSet material_buffer_write{};
+        material_buffer_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        material_buffer_write.dstSet = descriptor_set;
+        material_buffer_write.dstBinding = 2;
+        material_buffer_write.dstArrayElement = 0;
+        material_buffer_write.descriptorType =
+            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+        material_buffer_write.descriptorCount = 1;
+        material_buffer_write.pBufferInfo = &material_buffer_info;
+
         std::array const descriptor_writes{target_image_write,
-            world_buffer_write};
+            world_buffer_write,
+            material_buffer_write};
 
         vkUpdateDescriptorSets(device->logical,
             vkrndr::count_cast(descriptor_writes.size()),
@@ -105,6 +127,7 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
     , descriptor_layout_{create_descriptor_set_layout(device_)}
 {
     fill_world();
+    fill_materials();
 
     vkrndr::create_descriptor_sets(device_,
         descriptor_layout_,
@@ -130,11 +153,15 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
             .imageLayout = VK_IMAGE_LAYOUT_GENERAL},
         VkDescriptorBufferInfo{.buffer = world_buffer_.buffer,
             .offset = 0,
-            .range = world_buffer_.size});
+            .range = world_buffer_.size},
+        VkDescriptorBufferInfo{.buffer = material_buffer_.buffer,
+            .offset = 0,
+            .range = material_buffer_.size});
 }
 
 beam::raytracer::~raytracer()
 {
+    destroy(device_, &material_buffer_);
     destroy(device_, &world_buffer_);
 
     destroy(device_, compute_pipeline_.get());
@@ -147,7 +174,8 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
     auto& target_extent{scene_->color_image().extent};
 
     push_constants const pc{.camera_position = camera_position_,
-        .world_count = 2,
+        .world_count = 4,
+        .material_count = 4,
         .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_),
         .max_depth = cppext::narrow<uint32_t>(max_depth_)};
 
@@ -180,7 +208,10 @@ void beam::raytracer::on_resize()
             .imageLayout = VK_IMAGE_LAYOUT_GENERAL},
         VkDescriptorBufferInfo{.buffer = world_buffer_.buffer,
             .offset = 0,
-            .range = world_buffer_.size});
+            .range = world_buffer_.size},
+        VkDescriptorBufferInfo{.buffer = material_buffer_.buffer,
+            .offset = 0,
+            .range = material_buffer_.size});
 }
 
 void beam::raytracer::draw_imgui()
@@ -190,7 +221,7 @@ void beam::raytracer::draw_imgui()
         glm::value_ptr(camera_position_),
         -10.f,
         10.f);
-    ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 10);
+    ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 100);
     ImGui::SliderInt("Max depth", &max_depth_, 0, 100);
     ImGui::End();
 }
@@ -198,7 +229,7 @@ void beam::raytracer::draw_imgui()
 void beam::raytracer::fill_world()
 {
     vkrndr::vulkan_buffer staging_buffer{vkrndr::create_buffer(*device_,
-        2 * sizeof(sphere),
+        4 * sizeof(sphere),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
@@ -207,8 +238,18 @@ void beam::raytracer::fill_world()
         auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
         sphere* const spheres{world_map.as<sphere>()};
 
-        spheres[0] = {.center = {0.0f, 0.0f, -1.0f}, .radius = 0.5f};
-        spheres[1] = {.center = {0.0f, -100.5f, -1.0f}, .radius = 100.0f};
+        spheres[0] = {.center = {0.0f, -100.5f, -1.0f},
+            .radius = 100.0f,
+            .material = glm::uvec4{0, 0, 0, 0}};
+        spheres[1] = {.center = {0.0f, 0.0f, -1.2f},
+            .radius = 0.5f,
+            .material = glm::uvec4{1, 0, 0, 0}};
+        spheres[2] = {.center = {-1.0f, 0.0f, -1.0f},
+            .radius = 0.5f,
+            .material = glm::uvec4{2, 1, 0, 0}};
+        spheres[3] = {.center = {1.0f, 0.0f, -1.0f},
+            .radius = 0.5f,
+            .material = glm::uvec4{3, 1, 0, 0}};
 
         unmap_memory(*device_, &world_map);
     }
@@ -219,6 +260,36 @@ void beam::raytracer::fill_world()
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     renderer_->transfer_buffer(staging_buffer, world_buffer_);
+
+    destroy(device_, &staging_buffer);
+}
+
+void beam::raytracer::fill_materials()
+{
+    vkrndr::vulkan_buffer staging_buffer{vkrndr::create_buffer(*device_,
+        4 * sizeof(material),
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
+            VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
+
+    {
+        auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
+        material* const materials{world_map.as<material>()};
+
+        materials[0] = {.color = {0.8f, 0.8f, 0.0f}, .value = 0.5f};
+        materials[1] = {.color = {0.1f, 0.2f, 0.5f}, .value = 0.5f};
+        materials[2] = {.color = {0.8f, 0.8f, 0.8f}, .value = 0.3f};
+        materials[3] = {.color = {0.8f, 0.6f, 0.2f}, .value = 1.0f};
+
+        unmap_memory(*device_, &world_map);
+    }
+
+    material_buffer_ = create_buffer(*device_,
+        staging_buffer.size,
+        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+    renderer_->transfer_buffer(staging_buffer, material_buffer_);
 
     destroy(device_, &staging_buffer);
 }

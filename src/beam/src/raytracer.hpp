@@ -51,6 +51,7 @@ namespace beam
 
     private:
         void fill_world();
+        void fill_materials();
 
     private:
         vkrndr::vulkan_device* device_;
@@ -67,6 +68,7 @@ namespace beam
         int max_depth_{50};
 
         vkrndr::vulkan_buffer world_buffer_;
+        vkrndr::vulkan_buffer material_buffer_;
     };
 } // namespace beam
 

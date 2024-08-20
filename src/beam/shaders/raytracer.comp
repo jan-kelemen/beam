@@ -10,6 +10,7 @@ layout (local_size_x = 16, local_size_y = 16) in;
 layout(push_constant) uniform PushConsts {
     vec3 cameraPosition;
     uint worldCount;
+    uint materialCount;
     uint samplesPerPixel;
     uint maxDepth;
 } pc;
@@ -20,11 +21,21 @@ struct Sphere
 {
     vec3 center;
     float radius;
+    uvec4 material;
 };
 
 layout(std430, binding = 1) readonly buffer WorldBuffer {
     Sphere spheres[];
 } world;
+
+struct Material {
+    vec3 color;
+    float val;
+};
+
+layout(std430, binding = 2) readonly buffer MaterialBuffer {
+    Material materials[];
+} mat;
 
 struct Ray
 {
@@ -41,7 +52,14 @@ struct HitRecord
     vec3 p;
     vec3 normal;
     float t;
+    uvec2 material;
+    bool frontFace;
 };
+
+void faceNormal(Ray r, vec3 outwardNormal, out bool frontFace, out vec3 normal) {
+    frontFace = dot(r.direction, outwardNormal) < 0;
+    normal = frontFace ? outwardNormal : -outwardNormal;
+}
 
 struct Interval
 {
@@ -85,7 +103,7 @@ bool hitSphere(Sphere s, Ray r, Interval inter, inout HitRecord rec) {
 
     rec.t = root;
     rec.p = rayAt(r, rec.t);
-    rec.normal = (rec.p - s.center) / s.radius;
+    faceNormal(r, (rec.p - s.center) / s.radius, rec.frontFace, rec.normal);
 
     return true;
 }
@@ -100,6 +118,7 @@ bool hitWorld(Ray r, Interval inter, inout HitRecord rec) {
             hitAnything = true;
             closestSoFar = tempRec.t;
             rec = tempRec;
+            rec.material = world.spheres[i].material.xy;
         }
     }
 
@@ -169,27 +188,68 @@ Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 p
     return Ray(origin, direction);
 }
 
+bool nearZero(vec3 direction) {
+    float eps = 1e-8;
+
+    direction = abs(direction);
+
+    return direction.x < eps && direction.y < eps && direction.z < eps;
+}
+
+bool scatter(Ray r, HitRecord rec, out vec3 attenuation, out Ray scattered) {
+    if (rec.material.x >= pc.materialCount) {
+        return false;
+    }
+
+    if (rec.material.y == 0) {
+        vec3 scatterDirection = rec.normal + randomNormVec3();
+
+        if (nearZero(scatterDirection)) {
+            scatterDirection = rec.normal;
+        }
+
+        scattered = Ray(rec.p, scatterDirection);
+        attenuation = mat.materials[rec.material.x].color;
+
+        return true;
+    }
+    
+    if (rec.material.y == 1) {
+        vec3 reflected = reflect(r.direction, rec.normal);
+        reflected = normalize(reflected + (mat.materials[rec.material.x].val * randomNormVec3()));
+        scattered = Ray(rec.p, reflected);
+        attenuation = mat.materials[rec.material.x].color;
+        return dot(scattered.direction, rec.normal) > 0;
+    }
+
+    return false;
+}
+
 vec4 rayColor(Ray r) {
     Interval inter = Interval(0.001, posInf);
 
-    vec4 current = vec4(0.5, 0.7, 1.0, 1.0);
+    vec4 reflected = vec4(1);
+    vec4 current = vec4(0);
 
     for (uint i = 0; i != pc.maxDepth; ++i) {
         HitRecord rec;
         if (!hitWorld(r, inter, rec)) {
+            current = vec4(0.5, 0.7, 1.0, 1.0);
             break;
         }
 
-        r.origin = rec.p;
-        r.direction = rec.normal + randomNormVec3();
-        current = 0.5 * current;
+        Ray scattered;
+        vec3 attenuation;
+        if (!scatter(r, rec, attenuation, scattered)) {
+            current = vec4(0);
+            break;
+        }
+
+        reflected *= vec4(attenuation, 1.0);
+        r = scattered;
     }
 
-    return current;
-
-    vec3 normDirection = normalize(r.direction);
-    float alpha = 0.5 * (normDirection.y + 1.0);
-    return (1.0 - alpha) * vec4(1) + alpha * vec4(0.5, 0.7, 1.0, 1.0);
+    return reflected * current;
 }
 
 
