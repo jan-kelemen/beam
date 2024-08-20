@@ -28,6 +28,7 @@ namespace
         glm::vec3 camera_position;
         uint32_t world_count;
         uint32_t samples_per_pixel;
+        uint32_t max_depth;
     };
 
     [[nodiscard]] VkDescriptorSetLayout create_descriptor_set_layout(
@@ -147,7 +148,8 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
 
     push_constants const pc{.camera_position = camera_position_,
         .world_count = 2,
-        .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_)};
+        .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_),
+        .max_depth = cppext::narrow<uint32_t>(max_depth_)};
 
     vkCmdPushConstants(command_buffer,
         *compute_pipeline_->pipeline_layout,
@@ -189,6 +191,7 @@ void beam::raytracer::draw_imgui()
         -10.f,
         10.f);
     ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 10);
+    ImGui::SliderInt("Max depth", &max_depth_, 0, 100);
     ImGui::End();
 }
 

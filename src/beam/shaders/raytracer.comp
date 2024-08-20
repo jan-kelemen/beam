@@ -1,11 +1,17 @@
 #version 460
 
+uint uintMax = ~0;
+
+float posInf = 1.0 / 0.0;
+float negInf = -1.0 / 0.0;
+
 layout (local_size_x = 16, local_size_y = 16) in;
 
 layout(push_constant) uniform PushConsts {
     vec3 cameraPosition;
     uint worldCount;
     uint samplesPerPixel;
+    uint maxDepth;
 } pc;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
@@ -43,8 +49,8 @@ struct Interval
     float max;
 };
 
-Interval empty = Interval(1.0 / 0.0, -1.0 / 0.0);
-Interval universe = Interval(-1.0 / 0.0, 1.0 / 0.0);
+Interval empty = Interval(posInf, negInf);
+Interval universe = Interval(negInf, posInf);
 
 bool surrounds(Interval i, float x) {
     return i.min < x && x < i.max;
@@ -100,18 +106,6 @@ bool hitWorld(Ray r, Interval inter, inout HitRecord rec) {
     return hitAnything;
 }
 
-vec4 rayColor(Ray r) {
-    Interval inter = Interval(0, 1.0 / 0.0);
-
-    HitRecord rec;
-    if (hitWorld(r, inter, rec)) {
-        return vec4(0.5 * (rec.normal + vec3(1)), 1.0);
-    }
-
-    vec3 normDirection = normalize(r.direction);
-    float alpha = 0.5 * (normDirection.y + 1.0);
-    return (1.0 - alpha) * vec4(1) + alpha * vec4(0.5, 0.7, 1.0, 1.0);
-}
 
 // https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
 uint rng_state;
@@ -123,8 +117,43 @@ uint randPCG()
     return (word >> 22u) ^ word;
 }
 
+float randomFloat() {
+    return float(randPCG()) / uintMax;
+}
+
+float randomFloat(float min, float max) {
+    return min + (max - min) * randomFloat();
+}
+
+vec3 randomVec3() {
+    return vec3(randomFloat(), randomFloat(), randomFloat());
+}
+
+vec3 randomVec3(float min, float max) {
+    return vec3(randomFloat(min, max), randomFloat(min, max), randomFloat(min, max));
+}
+
+vec3 randomInUnitSphere() {
+    while (true) {
+        vec3 p = randomVec3(-1.0, 1.0);
+        if (dot(p, p) < 1)
+            return p;
+    }
+}
+
+vec3 randomNormVec3() {
+    return normalize(randomInUnitSphere());
+}
+
+vec3 randomOnHemisphere(vec3 normal) {
+    vec3 onUnitSphere = randomNormVec3();
+    if (dot(onUnitSphere, normal) > 0.0) {
+        return onUnitSphere;
+    }
+    return -onUnitSphere;
+}
+
 vec3 sampleSquare() {
-    uint uintMax = ~0;
     return vec3(float(randPCG()) / uintMax - 0.5, float(randPCG()) / uintMax - 0.5, 0);
 }
 
@@ -140,10 +169,37 @@ Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 p
     return Ray(origin, direction);
 }
 
+vec4 rayColor(Ray r) {
+    Interval inter = Interval(0.001, posInf);
+
+    vec4 current = vec4(0.5, 0.7, 1.0, 1.0);
+
+    for (uint i = 0; i != pc.maxDepth; ++i) {
+        HitRecord rec;
+        if (!hitWorld(r, inter, rec)) {
+            break;
+        }
+
+        r.origin = rec.p;
+        r.direction = rec.normal + randomNormVec3();
+        current = 0.5 * current;
+    }
+
+    return current;
+
+    vec3 normDirection = normalize(r.direction);
+    float alpha = 0.5 * (normDirection.y + 1.0);
+    return (1.0 - alpha) * vec4(1) + alpha * vec4(0.5, 0.7, 1.0, 1.0);
+}
+
+
 void main() 
 {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
     ivec2 imageSize = imageSize(image);
+
+    rng_state = texelCoord.x + texelCoord.y * imageSize.y;
+
     float aspectRatio = float(imageSize.x) / imageSize.y;
 
     float focalLength = 1.0;

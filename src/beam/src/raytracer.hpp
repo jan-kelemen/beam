@@ -64,6 +64,7 @@ namespace beam
 
         glm::vec3 camera_position_{0.0f, 0.0f, 0.0f};
         int samples_per_pixel_{4};
+        int max_depth_{50};
 
         vkrndr::vulkan_buffer world_buffer_;
     };
