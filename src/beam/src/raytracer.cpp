@@ -246,7 +246,7 @@ void beam::raytracer::fill_world()
             .material = glm::uvec4{1, 0, 0, 0}};
         spheres[2] = {.center = {-1.0f, 0.0f, -1.0f},
             .radius = 0.5f,
-            .material = glm::uvec4{2, 1, 0, 0}};
+            .material = glm::uvec4{2, 2, 0, 0}};
         spheres[3] = {.center = {1.0f, 0.0f, -1.0f},
             .radius = 0.5f,
             .material = glm::uvec4{3, 1, 0, 0}};
@@ -278,7 +278,7 @@ void beam::raytracer::fill_materials()
 
         materials[0] = {.color = {0.8f, 0.8f, 0.0f}, .value = 0.5f};
         materials[1] = {.color = {0.1f, 0.2f, 0.5f}, .value = 0.5f};
-        materials[2] = {.color = {0.8f, 0.8f, 0.8f}, .value = 0.3f};
+        materials[2] = {.color = {0.8f, 0.8f, 0.8f}, .value = 1.00f / 1.33f};
         materials[3] = {.color = {0.8f, 0.6f, 0.2f}, .value = 1.0f};
 
         unmap_memory(*device_, &world_map);

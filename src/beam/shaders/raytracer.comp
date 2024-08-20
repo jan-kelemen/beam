@@ -196,6 +196,12 @@ bool nearZero(vec3 direction) {
     return direction.x < eps && direction.y < eps && direction.z < eps;
 }
 
+float reflectance(float cosine, float refractionIndex) {
+    float r0 = (1 - refractionIndex) / (1 + refractionIndex);
+    r0 = r0 * r0;
+    return r0 + (1 - r0) * pow((1 - cosine), 5);
+}
+
 bool scatter(Ray r, HitRecord rec, out vec3 attenuation, out Ray scattered) {
     if (rec.material.x >= pc.materialCount) {
         return false;
@@ -217,9 +223,32 @@ bool scatter(Ray r, HitRecord rec, out vec3 attenuation, out Ray scattered) {
     if (rec.material.y == 1) {
         vec3 reflected = reflect(r.direction, rec.normal);
         reflected = normalize(reflected + (mat.materials[rec.material.x].val * randomNormVec3()));
+
         scattered = Ray(rec.p, reflected);
         attenuation = mat.materials[rec.material.x].color;
+
         return dot(scattered.direction, rec.normal) > 0;
+    }
+
+    if (rec.material.y == 2) {            
+        float ri = rec.frontFace ? ( 1.0 / mat.materials[rec.material.x].val) : mat.materials[rec.material.x].val;
+
+        vec3 unitDirection = normalize(r.direction);
+        float cosTheta = min(dot(-unitDirection, rec.normal), 1.0);
+        float sinTheta = sqrt(1.0 - cosTheta * cosTheta);
+
+        bool cannotRefract = ri * sinTheta > 1.0;
+        vec3 direction;
+
+        if (cannotRefract || reflectance(cosTheta, ri) > randomFloat())
+            direction = reflect(unitDirection, rec.normal);
+        else
+            direction = refract(unitDirection, rec.normal, ri);
+
+        attenuation = vec3(1.0);
+        scattered = Ray(rec.p, direction);
+
+        return true;
     }
 
     return false;
@@ -234,7 +263,12 @@ vec4 rayColor(Ray r) {
     for (uint i = 0; i != pc.maxDepth; ++i) {
         HitRecord rec;
         if (!hitWorld(r, inter, rec)) {
-            current = vec4(0.5, 0.7, 1.0, 1.0);
+            vec3 white = vec3(1);
+            vec3 blue = vec3(0.5, 0.7, 1.0);
+
+            float alpha = 0.5 * (normalize(r.direction).y + 1.0);
+            current = vec4((1.0 - alpha) * white + alpha * blue, 1.0);
+
             break;
         }
 
