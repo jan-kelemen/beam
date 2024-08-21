@@ -33,6 +33,9 @@ namespace
         glm::vec3 camera_up;
         uint32_t samples_per_pixel;
         uint32_t max_depth;
+        float defocus_angle;
+        float focus_distance;
+        float fovy;
     };
 
     [[nodiscard]] VkDescriptorSetLayout create_descriptor_set_layout(
@@ -189,7 +192,10 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
         .material_count = 4,
         .camera_up = camera_up_,
         .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_),
-        .max_depth = cppext::narrow<uint32_t>(max_depth_)};
+        .max_depth = cppext::narrow<uint32_t>(max_depth_),
+        .defocus_angle = defocus_angle_,
+        .focus_distance = focus_distance_,
+        .fovy = fovy_};
 
     vkCmdPushConstants(command_buffer,
         *compute_pipeline_->pipeline_layout,
@@ -230,7 +236,10 @@ void beam::raytracer::draw_imgui()
 {
     ImGui::Begin("Raytracer");
     ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 100);
-    ImGui::SliderInt("Max depth", &max_depth_, 0, 100);
+    ImGui::SliderInt("Max depth", &max_depth_, 1, 50);
+    ImGui::SliderFloat("Focus distance", &focus_distance_, 0, 100);
+    ImGui::SliderFloat("Defocus angle", &defocus_angle_, -1, 10);
+    ImGui::SliderFloat("FOV Y", &fovy_, 0, 120);
     ImGui::End();
 }
 

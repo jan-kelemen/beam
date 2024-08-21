@@ -73,6 +73,11 @@ namespace beam
         glm::vec3 camera_front_;
         glm::vec3 camera_up_;
 
+        float fovy_{20.0f};
+
+        float defocus_angle_{0.6f};
+        float focus_distance_{10.0f};
+
         vkrndr::vulkan_buffer world_buffer_;
         vkrndr::vulkan_buffer material_buffer_;
     };

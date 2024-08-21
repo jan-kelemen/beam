@@ -17,7 +17,7 @@
 
 namespace
 {
-    constexpr auto velocity_factor{10.0f};
+    constexpr auto velocity_factor{5.0f};
 } // namespace
 
 beam::free_camera_controller::free_camera_controller(

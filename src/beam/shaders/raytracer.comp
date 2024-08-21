@@ -15,6 +15,9 @@ layout(push_constant) uniform PushConsts {
     vec3 cameraUp;
     uint samplesPerPixel;
     uint maxDepth;
+    float defocusAngle;
+    float focusDistance;
+    float fovy;
 } pc;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
@@ -178,13 +181,18 @@ vec3 sampleSquare() {
     return vec3(float(randPCG()) / uintMax - 0.5, float(randPCG()) / uintMax - 0.5, 0);
 }
 
-Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 pixelDeltaV) {
+vec3 defocusDiskSample(vec3 defocusDiskU, vec3 defocusDiskV) {
+    vec3 p = randomInUnitSphere();
+    return pc.cameraPosition + p.x * defocusDiskU + p.y * defocusDiskV;
+}
+
+Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 pixelDeltaV, vec3 defocusDiskU, vec3 defocusDiskV) {
     vec3 offset = sampleSquare();
     vec3 texsample = pixel00
         + (texelCoord.x + offset.x) * pixelDeltaU
         + (texelCoord.y + offset.y) * pixelDeltaV;
 
-    vec3 origin = center;
+    vec3 origin = (pc.defocusAngle <= 0) ? center : defocusDiskSample(defocusDiskU, defocusDiskV);
     vec3 direction = texsample - origin;
 
     return Ray(origin, direction);
@@ -289,6 +297,7 @@ vec4 rayColor(Ray r) {
 }
 
 
+
 void main() 
 {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
@@ -298,12 +307,14 @@ void main()
 
     float aspectRatio = float(imageSize.x) / imageSize.y;
 
-    float focalLength = length(pc.cameraPosition - pc.cameraFront);
     vec3 w = normalize(pc.cameraPosition - pc.cameraFront);
     vec3 u = normalize(cross(pc.cameraUp, w));
     vec3 v = cross(w, u);
 
-    float viewportHeight = 2.0;
+    float theta = radians(pc.fovy);
+    float h = tan(theta / 2);
+
+    float viewportHeight = 2 * h * pc.focusDistance;
     float viewportWidth = viewportHeight * aspectRatio;
 
     vec3 viewportU = viewportWidth * u;
@@ -313,16 +324,19 @@ void main()
     vec3 pixelDeltaV = viewportV / imageSize.y;
 
     vec3 viewportUpperLeft = pc.cameraPosition
-                             - focalLength * w - viewportU / 2 - viewportV / 2;
+                             - pc.focusDistance * w - viewportU / 2 - viewportV / 2;
 
     vec3 pixel00 = viewportUpperLeft + 0.5 * (pixelDeltaU + pixelDeltaV);
 
+    float defocusRadius = pc.focusDistance * tan(radians(pc.defocusAngle / 2));
+    vec3 defocusDiskU = u * defocusRadius;
+    vec3 defocusDiskV = v * defocusRadius;
 
     if(texelCoord.x < imageSize.x && texelCoord.y < imageSize.y)
     {
         vec4 color = vec4(0);
         for (uint i = 0; i != pc.samplesPerPixel; ++i) {
-            Ray r = getRay(texelCoord, pc.cameraPosition, pixel00, pixelDeltaU, pixelDeltaV);
+            Ray r = getRay(texelCoord, pc.cameraPosition, pixel00, pixelDeltaU, pixelDeltaV, defocusDiskU, defocusDiskV);
             color += rayColor(r);
         }
         color /= pc.samplesPerPixel;
