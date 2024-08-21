@@ -6,17 +6,18 @@
 
 namespace beam
 {
-    struct [[nodiscard]] sphere final
+    struct [[nodiscard]] alignas(32) sphere final
     {
         glm::vec3 center;
         float radius;
-        glm::uvec4 material;
+        uint32_t material;
     };
 
-    struct [[nodiscard]] material final
+    struct [[nodiscard]] alignas(32) material final
     {
         glm::vec3 color;
         float value;
+        uint32_t type;
     };
 
 } // namespace beam
