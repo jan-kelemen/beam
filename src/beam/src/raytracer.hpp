@@ -1,6 +1,8 @@
 #ifndef BEAM_RAYTRACER_INCLUDED
 #define BEAM_RAYTRACER_INCLUDED
 
+#include <sphere.hpp>
+
 #include <vulkan_buffer.hpp>
 
 #include <glm/vec3.hpp>
@@ -8,6 +10,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include <memory>
+#include <span>
 
 namespace vkrndr
 {
@@ -53,8 +56,9 @@ namespace beam
         raytracer& operator=(raytracer&&) noexcept = delete;
 
     private:
-        void fill_world();
-        void fill_materials();
+        void fill_world(std::span<sphere const> spheres);
+        void fill_materials(std::span<material const> materials);
+        void fill_world_and_materials();
 
     private:
         vkrndr::vulkan_device* device_;
@@ -79,7 +83,9 @@ namespace beam
         float focus_distance_{10.0f};
 
         vkrndr::vulkan_buffer world_buffer_;
+        uint32_t sphere_count_;
         vkrndr::vulkan_buffer material_buffer_;
+        uint32_t material_count_;
     };
 } // namespace beam
 

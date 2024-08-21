@@ -21,6 +21,7 @@
 #include <vulkan/vulkan_core.h>
 
 #include <array>
+#include <random>
 
 namespace
 {
@@ -132,8 +133,7 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
     , scene_{scene}
     , descriptor_layout_{create_descriptor_set_layout(device_)}
 {
-    fill_world();
-    fill_materials();
+    fill_world_and_materials();
 
     vkrndr::create_descriptor_sets(device_,
         descriptor_layout_,
@@ -187,9 +187,9 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
     auto& target_extent{scene_->color_image().extent};
 
     push_constants const pc{.camera_position = camera_position_,
-        .world_count = 4,
+        .world_count = sphere_count_,
         .camera_front = camera_position_ + camera_front_,
-        .material_count = 4,
+        .material_count = material_count_,
         .camera_up = camera_up_,
         .samples_per_pixel = cppext::narrow<uint32_t>(samples_per_pixel_),
         .max_depth = cppext::narrow<uint32_t>(max_depth_),
@@ -243,31 +243,18 @@ void beam::raytracer::draw_imgui()
     ImGui::End();
 }
 
-void beam::raytracer::fill_world()
+void beam::raytracer::fill_world(std::span<sphere const> spheres)
 {
     vkrndr::vulkan_buffer staging_buffer{vkrndr::create_buffer(*device_,
-        4 * sizeof(sphere),
+        spheres.size() * sizeof(sphere),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
     {
         auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
-        sphere* const spheres{world_map.as<sphere>()};
-
-        spheres[0] = {.center = {0.0f, -100.5f, -1.0f},
-            .radius = 100.0f,
-            .material = 0};
-        spheres[1] = {.center = {0.0f, 0.0f, -1.2f},
-            .radius = 0.5f,
-            .material = 1};
-        spheres[2] = {.center = {-1.0f, 0.0f, -1.0f},
-            .radius = 0.5f,
-            .material = 2};
-        spheres[3] = {.center = {1.0f, 0.0f, -1.0f},
-            .radius = 0.5f,
-            .material = 3};
-
+        sphere* const sph{world_map.as<sphere>()};
+        std::ranges::copy(spheres, sph);
         unmap_memory(*device_, &world_map);
     }
 
@@ -275,31 +262,25 @@ void beam::raytracer::fill_world()
         staging_buffer.size,
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    sphere_count_ = cppext::narrow<uint32_t>(spheres.size());
 
     renderer_->transfer_buffer(staging_buffer, world_buffer_);
 
     destroy(device_, &staging_buffer);
 }
 
-void beam::raytracer::fill_materials()
+void beam::raytracer::fill_materials(std::span<material const> materials)
 {
     vkrndr::vulkan_buffer staging_buffer{vkrndr::create_buffer(*device_,
-        4 * sizeof(material),
+        materials.size() * sizeof(material),
         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
     {
         auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
-        material* const materials{world_map.as<material>()};
-
-        materials[0] = {.color = {0.8f, 0.8f, 0.0f}, .value = 0.5f, .type = 0};
-        materials[1] = {.color = {0.1f, 0.2f, 0.5f}, .value = 0.5f, .type = 0};
-        materials[2] = {.color = {0.8f, 0.8f, 0.8f},
-            .value = 1.00f / 1.33f,
-            .type = 2};
-        materials[3] = {.color = {0.8f, 0.6f, 0.2f}, .value = 1.0f, .type = 1};
-
+        material* const mat{world_map.as<material>()};
+        std::ranges::copy(materials, mat);
         unmap_memory(*device_, &world_map);
     }
 
@@ -307,8 +288,85 @@ void beam::raytracer::fill_materials()
         staging_buffer.size,
         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    material_count_ = cppext::narrow<uint32_t>(materials.size());
 
     renderer_->transfer_buffer(staging_buffer, material_buffer_);
 
     destroy(device_, &staging_buffer);
+}
+
+void beam::raytracer::fill_world_and_materials()
+{
+    static constexpr uint32_t lambertian{0};
+    static constexpr uint32_t metal{1};
+    static constexpr uint32_t dielectric{2};
+
+    std::default_random_engine rng{std::random_device{}()};
+    std::uniform_real_distribution<float> dist{0.0, 1.0f};
+    std::uniform_real_distribution<float> lower_dist{0.0, 0.5f};
+    std::uniform_real_distribution<float> upper_dist{0.5, 1.0f};
+
+    std::vector<sphere> spheres;
+    std::vector<material> materials;
+    materials.emplace_back(glm::vec3{0.5f, 0.5f, 0.5f}, 0.0f, lambertian);
+    spheres.emplace_back(glm::vec3{0.0f, -1000.0f, 0.0f},
+        1000.0f,
+        materials.size() - 1);
+
+    auto gen_color = [&]()
+    { return glm::vec3{dist(rng), dist(rng), dist(rng)}; };
+
+    for (int a = -11; a < 11; a++)
+    {
+        for (int b = -11; b < 11; b++)
+        {
+            auto const choose_mat{dist(rng)};
+            glm::vec3 const center{cppext::as_fp(a) + 0.9f * dist(rng),
+                0.2f,
+                cppext::as_fp(b) + 0.9f * dist(rng)};
+
+            if ((center - glm::vec3{4.0f, 0.2f, 0.0f}).length() > 0.9)
+            {
+                if (choose_mat < 0.8)
+                {
+                    // diffuse
+                    glm::vec3 const albedo{gen_color() * gen_color()};
+                    materials.emplace_back(albedo, 0.0f, lambertian);
+                }
+                else if (choose_mat < 0.95)
+                {
+                    // metal
+                    glm::vec3 const albedo{upper_dist(rng),
+                        upper_dist(rng),
+                        upper_dist(rng)};
+                    float const fuzz{lower_dist(rng)};
+                    materials.emplace_back(albedo, fuzz, metal);
+                }
+                else
+                {
+                    materials.emplace_back(glm::vec3{}, 1.5f, dielectric);
+                }
+
+                spheres.emplace_back(center, 0.2f, materials.size() - 1);
+            }
+        }
+    }
+
+    materials.emplace_back(glm::vec3{}, 1.5f, dielectric);
+    spheres.emplace_back(glm::vec3{0.0f, 1.0f, 0.0f},
+        1.0f,
+        materials.size() - 1);
+
+    materials.emplace_back(glm::vec3{0.4f, 0.2f, 0.1f}, 0.0f, lambertian);
+    spheres.emplace_back(glm::vec3{-4.0f, 1.0f, 0.0f},
+        1.0f,
+        materials.size() - 1);
+
+    materials.emplace_back(glm::vec3{0.7f, 0.6f, 0.5f}, 0.0f, metal);
+    spheres.emplace_back(glm::vec3{4.0f, 1.0f, 0.0f},
+        1.0f,
+        materials.size() - 1);
+
+    fill_materials(materials);
+    fill_world(spheres);
 }

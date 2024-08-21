@@ -38,7 +38,8 @@ beam::application::application(bool const debug)
 {
     this->vulkan_renderer()->imgui_layer(true);
 
-    camera_.set_position({-2, 2, 1});
+    camera_.set_position({13.0f, 2.0f, 3.0f});
+    camera_.set_yaw_pitch({-167.0f, -3.0f});
     camera_.resize({512, 512});
     camera_.update();
 
