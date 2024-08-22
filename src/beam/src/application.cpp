@@ -44,6 +44,7 @@ beam::application::application(bool const debug)
     camera_.update();
 
     scene_->set_raytracer(raytracer_.get());
+    raytracer_->update(camera_);
 }
 
 beam::application::~application() { }
@@ -81,9 +82,10 @@ bool beam::application::handle_event(SDL_Event const& event)
 
 void beam::application::update(float delta_time)
 {
-    camera_controller_.update(delta_time);
-
-    raytracer_->update(camera_);
+    if (camera_controller_.update(delta_time))
+    {
+        raytracer_->update(camera_);
+    }
 }
 
 vkrndr::scene* beam::application::render_scene() { return scene_.get(); }

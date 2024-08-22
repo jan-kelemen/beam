@@ -60,7 +60,7 @@ void beam::free_camera_controller::handle_event(SDL_Event const& event)
     }
 }
 
-void beam::free_camera_controller::update(float delta_time)
+bool beam::free_camera_controller::update(float delta_time)
 {
     {
         int keyboard_state_length; // NOLINT
@@ -73,27 +73,29 @@ void beam::free_camera_controller::update(float delta_time)
             keyboard_state[SDL_SCANCODE_A] != 0)
         {
             velocity_ -= velocity_factor * camera_->right_direction();
+            update_needed_ = true;
         }
 
         if (keyboard_state[SDL_SCANCODE_RIGHT] != 0 ||
             keyboard_state[SDL_SCANCODE_D] != 0)
         {
             velocity_ += velocity_factor * camera_->right_direction();
+            update_needed_ = true;
         }
 
         if (keyboard_state[SDL_SCANCODE_UP] != 0 ||
             keyboard_state[SDL_SCANCODE_W] != 0)
         {
             velocity_ += velocity_factor * camera_->front_direction();
+            update_needed_ = true;
         }
 
         if (keyboard_state[SDL_SCANCODE_DOWN] != 0 ||
             keyboard_state[SDL_SCANCODE_S] != 0)
         {
             velocity_ -= velocity_factor * camera_->front_direction();
+            update_needed_ = true;
         }
-
-        update_needed_ = true;
     }
 
     if (update_needed_ || velocity_ != glm::vec3{0.0f, 0.0f, 0.0f})
@@ -103,5 +105,9 @@ void beam::free_camera_controller::update(float delta_time)
         camera_->update();
 
         update_needed_ = false;
+
+        return true;
     }
+
+    return false;
 }

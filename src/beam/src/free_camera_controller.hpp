@@ -32,7 +32,7 @@ namespace beam
     public:
         void handle_event(SDL_Event const& event);
 
-        void update(float delta_time);
+        [[nodiscard]] bool update(float delta_time);
 
     public:
         free_camera_controller& operator=(

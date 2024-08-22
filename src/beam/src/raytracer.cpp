@@ -21,10 +21,14 @@
 #include <vulkan/vulkan_core.h>
 
 #include <array>
+#include <iostream>
 #include <random>
 
 namespace
 {
+    std::default_random_engine rng{std::random_device{}()};
+    std::uniform_int_distribution<uint32_t> frame_dist{};
+
     struct [[nodiscard]] push_constants
     {
         glm::vec3 camera_position;
@@ -37,6 +41,8 @@ namespace
         float defocus_angle;
         float focus_distance;
         float fovy;
+        uint32_t total_samples;
+        uint32_t frame_seed;
     };
 
     [[nodiscard]] VkDescriptorSetLayout create_descriptor_set_layout(
@@ -180,6 +186,7 @@ void beam::raytracer::update(perspective_camera const& camera)
     camera_position_ = camera.position();
     camera_front_ = camera.front_direction();
     camera_up_ = camera.up_direction();
+    total_samples_ = 0;
 }
 
 void beam::raytracer::draw(VkCommandBuffer command_buffer)
@@ -195,7 +202,9 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
         .max_depth = cppext::narrow<uint32_t>(max_depth_),
         .defocus_angle = defocus_angle_,
         .focus_distance = focus_distance_,
-        .fovy = fovy_};
+        .fovy = fovy_,
+        .total_samples = total_samples_,
+        .frame_seed = frame_dist(rng)};
 
     vkCmdPushConstants(command_buffer,
         *compute_pipeline_->pipeline_layout,
@@ -216,6 +225,8 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
         static_cast<uint32_t>(
             std::ceil(cppext::as_fp(target_extent.height) / 16.0f)),
         1);
+
+    total_samples_ += samples_per_pixel_;
 }
 
 void beam::raytracer::on_resize()
@@ -234,13 +245,20 @@ void beam::raytracer::on_resize()
 
 void beam::raytracer::draw_imgui()
 {
+    bool reset{};
+
     ImGui::Begin("Raytracer");
-    ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 100);
-    ImGui::SliderInt("Max depth", &max_depth_, 1, 50);
-    ImGui::SliderFloat("Focus distance", &focus_distance_, 0, 100);
-    ImGui::SliderFloat("Defocus angle", &defocus_angle_, -1, 10);
-    ImGui::SliderFloat("FOV Y", &fovy_, 0, 120);
+    ImGui::SliderInt("Samples per pixel", &samples_per_pixel_, 1, 5);
+    reset |= ImGui::SliderInt("Max depth", &max_depth_, 1, 10);
+    reset |= ImGui::SliderFloat("Focus distance", &focus_distance_, 0, 100);
+    reset |= ImGui::SliderFloat("Defocus angle", &defocus_angle_, -1, 10);
+    reset |= ImGui::SliderFloat("FOV Y", &fovy_, 0, 120);
     ImGui::End();
+
+    if (reset)
+    {
+        total_samples_ = 0;
+    }
 }
 
 void beam::raytracer::fill_world(std::span<sphere const> spheres)
@@ -301,7 +319,6 @@ void beam::raytracer::fill_world_and_materials()
     static constexpr uint32_t metal{1};
     static constexpr uint32_t dielectric{2};
 
-    std::default_random_engine rng{std::random_device{}()};
     std::uniform_real_distribution<float> dist{0.0, 1.0f};
     std::uniform_real_distribution<float> lower_dist{0.0, 0.5f};
     std::uniform_real_distribution<float> upper_dist{0.5, 1.0f};

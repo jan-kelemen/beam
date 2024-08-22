@@ -18,6 +18,8 @@ layout(push_constant) uniform PushConsts {
     float defocusAngle;
     float focusDistance;
     float fovy;
+    uint totalSamples;
+    uint frameSeed;
 } pc;
 
 layout(rgba32f, set = 0, binding = 0) uniform image2D image;
@@ -133,7 +135,7 @@ bool hitWorld(Ray r, Interval inter, inout HitRecord rec) {
 
 
 // https://www.reedbeta.com/blog/hash-functions-for-gpu-rendering/
-uint rng_state;
+uint rng_state = pc.frameSeed;
 uint randPCG()
 {
     uint state = rng_state;
@@ -193,7 +195,7 @@ Ray getRay(ivec2 texelCoord, vec3 center, vec3 pixel00, vec3 pixelDeltaU, vec3 p
         + (texelCoord.x + offset.x) * pixelDeltaU
         + (texelCoord.y + offset.y) * pixelDeltaV;
 
-    vec3 origin = (pc.defocusAngle <= 0) ? center : defocusDiskSample(defocusDiskU, defocusDiskV);
+    vec3 origin = (pc.defocusAngle <= 0 || pc.totalSamples == 0) ? center : defocusDiskSample(defocusDiskU, defocusDiskV);
     vec3 direction = texsample - origin;
 
     return Ray(origin, direction);
@@ -299,16 +301,14 @@ vec4 rayColor(Ray r) {
     return reflected * current;
 }
 
-
-
 void main() 
 {
     ivec2 texelCoord = ivec2(gl_GlobalInvocationID.xy);
     ivec2 imageSize = imageSize(image);
 
-    rng_state = texelCoord.x + texelCoord.y * imageSize.y;
-
     float aspectRatio = float(imageSize.x) / imageSize.y;
+
+    rng_state += texelCoord.x + texelCoord.y * imageSize.y;
 
     vec3 w = normalize(pc.cameraPosition - pc.cameraFront);
     vec3 u = normalize(cross(pc.cameraUp, w));
@@ -337,13 +337,13 @@ void main()
 
     if(texelCoord.x < imageSize.x && texelCoord.y < imageSize.y)
     {
-        vec4 color = vec4(0);
+        vec4 color = imageLoad(image, texelCoord) * pc.totalSamples;
+
         for (uint i = 0; i != pc.samplesPerPixel; ++i) {
             Ray r = getRay(texelCoord, pc.cameraPosition, pixel00, pixelDeltaU, pixelDeltaV, defocusDiskU, defocusDiskV);
             color += rayColor(r);
         }
-        color /= pc.samplesPerPixel;
-    
-        imageStore(image, texelCoord, color);
+
+        imageStore(image, texelCoord, color / (pc.totalSamples + pc.samplesPerPixel));
     }
 }

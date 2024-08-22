@@ -70,8 +70,9 @@ namespace beam
 
         std::unique_ptr<vkrndr::vulkan_pipeline> compute_pipeline_;
 
-        int samples_per_pixel_{4};
-        int max_depth_{50};
+        int samples_per_pixel_{1};
+        int max_depth_{5};
+        uint32_t total_samples_{0};
 
         glm::vec3 camera_position_;
         glm::vec3 camera_front_;
