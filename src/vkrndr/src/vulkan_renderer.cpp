@@ -85,9 +85,15 @@ vkrndr::vulkan_renderer::vulkan_renderer(vulkan_window* const window,
     , frame_data_{vulkan_swap_chain::max_frames_in_flight,
           vulkan_swap_chain::max_frames_in_flight}
     , descriptor_pool_{create_descriptor_pool(device_)}
+    , imgui_layer_enabled_{debug}
     , font_manager_{std::make_unique<font_manager>()}
     , gltf_manager_{std::make_unique<gltf_manager>(this)}
 {
+    if (imgui_layer_enabled_)
+    {
+        imgui_layer(true);
+    }
+
     for (frame_data& fd : frame_data_.as_span())
     {
         fd.present_queue = device_.present_queue;
@@ -148,17 +154,11 @@ VkExtent2D vkrndr::vulkan_renderer::extent() const
 
 bool vkrndr::vulkan_renderer::imgui_layer() const
 {
-    return imgui_layer_ != nullptr;
+    return imgui_layer_enabled_;
 }
 
 void vkrndr::vulkan_renderer::imgui_layer(bool const state)
 {
-    if (!state && imgui_layer_)
-    {
-        imgui_layer_.reset();
-        return;
-    }
-
     if (state && !imgui_layer_)
     {
         imgui_layer_ = std::make_unique<imgui_render_layer>(window_,
@@ -166,6 +166,7 @@ void vkrndr::vulkan_renderer::imgui_layer(bool const state)
             &device_,
             swap_chain_.get());
     }
+    imgui_layer_enabled_ = state;
 }
 
 bool vkrndr::vulkan_renderer::begin_frame(scene* const scene)
@@ -197,7 +198,7 @@ bool vkrndr::vulkan_renderer::begin_frame(scene* const scene)
     begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
     check_result(vkBeginCommandBuffer(primary_buffer, &begin_info));
 
-    if (imgui_layer_)
+    if (imgui_layer_enabled_)
     {
         imgui_layer_->begin_frame();
     }
@@ -207,7 +208,7 @@ bool vkrndr::vulkan_renderer::begin_frame(scene* const scene)
 
 void vkrndr::vulkan_renderer::end_frame()
 {
-    if (imgui_layer_)
+    if (imgui_layer_enabled_)
     {
         imgui_layer_->end_frame();
     }
@@ -236,7 +237,7 @@ void vkrndr::vulkan_renderer::draw(scene* const scene)
 
     scene->draw(target_image, command_buffer, extent());
 
-    if (imgui_layer_)
+    if (imgui_layer_enabled_)
     {
         scene->draw_imgui();
         VkCommandBuffer imgui_command_buffer{request_command_buffer(false)};

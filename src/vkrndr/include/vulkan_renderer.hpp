@@ -134,6 +134,7 @@ namespace vkrndr
 
         VkDescriptorPool descriptor_pool_{};
 
+        bool imgui_layer_enabled_;
         std::unique_ptr<imgui_render_layer> imgui_layer_;
         std::unique_ptr<font_manager> font_manager_;
         std::unique_ptr<gltf_manager> gltf_manager_;

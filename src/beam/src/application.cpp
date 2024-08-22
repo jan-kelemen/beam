@@ -73,6 +73,11 @@ bool beam::application::handle_event(SDL_Event const& event)
         {
             mouse_.set_capture(!mouse_.captured());
         }
+        else if (keyboard.keysym.scancode == SDL_SCANCODE_F4)
+        {
+            this->vulkan_renderer()->imgui_layer(
+                !this->vulkan_renderer()->imgui_layer());
+        }
 
         return true;
     }
