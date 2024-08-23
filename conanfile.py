@@ -13,15 +13,15 @@ class BeamConan(ConanFile):
     def requirements(self):
         self.requires("boost/1.85.0")
         self.requires("bullet3/3.25")
-        self.requires("entt/3.13.0")
-        self.requires("fmt/11.0.0")
+        self.requires("entt/3.13.2")
+        self.requires("fmt/11.0.2")
         self.requires("freetype/2.13.2")
-        self.requires("glm/cci.20230113")
-        self.requires("imgui/1.90.8-docking")
+        self.requires("glm/1.0.1")
+        self.requires("imgui/1.91.0-docking")
         self.requires("perlinnoise/3.0.0")
-        self.requires("sdl/2.30.4")
+        self.requires("sdl/2.30.6")
         self.requires("spdlog/1.14.1")
-        self.requires("stb/cci.20240213")
+        self.requires("stb/cci.20240531")
         self.requires("tinygltf/2.9.0")
         self.requires("vulkan-headers/1.3.268.0")
         self.requires("vulkan-loader/1.3.268.0")
@@ -29,7 +29,7 @@ class BeamConan(ConanFile):
 
     def build_requirements(self):
         self.tool_requires("cmake/[^3.27]")
-        self.test_requires("catch2/[^3.6.0]")
+        self.test_requires("catch2/[^3.7.0]")
 
     def layout(self):
         cmake_layout(self)
