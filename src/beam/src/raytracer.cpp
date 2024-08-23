@@ -16,6 +16,7 @@
 #include <vulkan_renderer.hpp>
 #include <vulkan_utility.hpp>
 
+#include <glm/geometric.hpp>
 #include <glm/vec3.hpp>
 
 #include <imgui.h>
@@ -26,6 +27,7 @@
 #include <array>
 #include <cmath>
 #include <random>
+#include <vector>
 
 // IWYU pragma: no_include <filesystem>
 

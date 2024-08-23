@@ -4,7 +4,6 @@ target_sources(vkrndr
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include/font_manager.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/gltf_manager.hpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_camera.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_render_pass.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_scene.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/include/vkrndr_render_settings.hpp

@@ -44,7 +44,6 @@ namespace niku
     public: // niku::camera overrides
         void update() override;
 
-    public: // vkrndr::camera overrides
         [[nodiscard]] glm::mat4 const& view_matrix() const override;
 
         [[nodiscard]] glm::mat4 const& projection_matrix() const override;

@@ -1,13 +1,12 @@
 #ifndef NIKU_CAMERA_INCLUDED
 #define NIKU_CAMERA_INCLUDED
 
-#include <vkrndr_camera.hpp>
-
+#include <glm/mat4x4.hpp>
 #include <glm/vec3.hpp>
 
 namespace niku
 {
-    class [[nodiscard]] camera : public vkrndr::camera
+    class [[nodiscard]] camera
     {
     public:
         camera();
@@ -19,19 +18,26 @@ namespace niku
         camera(camera&&) = default;
 
     public:
-        ~camera() override = default;
+        virtual ~camera() = default;
 
     public:
         virtual void update() = 0;
 
-    public: // vkrndr::camera overrides
-        void set_aspect_ratio(float aspect_ratio) override;
+        [[nodiscard]] virtual glm::mat4 const& view_matrix() const = 0;
 
-        [[nodiscard]] float aspect_ratio() const override;
+        [[nodiscard]] virtual glm::mat4 const& projection_matrix() const = 0;
 
-        void set_position(glm::vec3 const& position) override;
+        [[nodiscard]] virtual glm::mat4 const&
+        view_projection_matrix() const = 0;
 
-        [[nodiscard]] glm::vec3 const& position() const override;
+    public:
+        virtual void set_aspect_ratio(float aspect_ratio);
+
+        [[nodiscard]] virtual float aspect_ratio() const;
+
+        virtual void set_position(glm::vec3 const& position);
+
+        [[nodiscard]] virtual glm::vec3 const& position() const;
 
     public:
         camera& operator=(camera const&) = default;
