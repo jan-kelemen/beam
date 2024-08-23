@@ -1,7 +1,7 @@
 #ifndef BEAM_RAYTRACER_INCLUDED
 #define BEAM_RAYTRACER_INCLUDED
 
-#include <sphere.hpp>
+#include <sphere.hpp> // IWYU pragma: keep
 
 #include <vulkan_buffer.hpp>
 
@@ -9,6 +9,7 @@
 
 #include <vulkan/vulkan_core.h>
 
+#include <cstdint>
 #include <memory>
 #include <span>
 
@@ -66,7 +67,7 @@ namespace beam
         scene* scene_;
 
         VkDescriptorSetLayout descriptor_layout_;
-        VkDescriptorSet descriptor_set_;
+        VkDescriptorSet descriptor_set_{VK_NULL_HANDLE};
 
         std::unique_ptr<vkrndr::vulkan_pipeline> compute_pipeline_;
 
@@ -74,9 +75,9 @@ namespace beam
         int max_depth_{5};
         uint32_t total_samples_{0};
 
-        glm::vec3 camera_position_;
-        glm::vec3 camera_front_;
-        glm::vec3 camera_up_;
+        glm::vec3 camera_position_{};
+        glm::vec3 camera_front_{};
+        glm::vec3 camera_up_{};
 
         float fovy_{20.0f};
 
@@ -84,9 +85,9 @@ namespace beam
         float focus_distance_{10.0f};
 
         vkrndr::vulkan_buffer world_buffer_;
-        uint32_t sphere_count_;
+        uint32_t sphere_count_{};
         vkrndr::vulkan_buffer material_buffer_;
-        uint32_t material_count_;
+        uint32_t material_count_{};
     };
 } // namespace beam
 

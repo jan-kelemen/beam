@@ -1,16 +1,19 @@
 #include <scene.hpp>
 
+#include <raytracer.hpp>
+
 #include <cppext_numeric.hpp>
 
-#include <vkrndr_render_pass.hpp>
 #include <vulkan_commands.hpp>
 #include <vulkan_device.hpp>
 #include <vulkan_image.hpp>
-#include <vulkan_renderer.hpp>
 
 #include <imgui.h>
 
 #include <vulkan/vulkan_core.h>
+
+#include <algorithm>
+#include <cstdint>
 
 beam::scene::scene(vkrndr::vulkan_device* const device,
     vkrndr::vulkan_renderer* const renderer,
@@ -86,7 +89,7 @@ void beam::scene::draw(vkrndr::vulkan_image const& target_image,
         VK_ACCESS_2_TRANSFER_WRITE_BIT,
         1);
 
-    VkOffset3D size{
+    VkOffset3D const size{
         .x = cppext::narrow<int32_t>(
             std::min(color_image_.extent.width, target_image.extent.width)),
         .y = cppext::narrow<int32_t>(
@@ -126,7 +129,8 @@ void beam::scene::draw_imgui()
     raytracer_->draw_imgui();
 }
 
-vkrndr::vulkan_image beam::scene::create_color_image(VkExtent2D const extent)
+vkrndr::vulkan_image beam::scene::create_color_image(
+    VkExtent2D const extent) const
 {
     return vkrndr::create_image_and_view(*device_,
         extent,

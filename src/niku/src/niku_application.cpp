@@ -4,7 +4,6 @@
 
 #include <cppext_numeric.hpp>
 
-#include <vulkan_context.hpp>
 #include <vulkan_device.hpp>
 #include <vulkan_renderer.hpp>
 

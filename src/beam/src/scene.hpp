@@ -1,8 +1,6 @@
 #ifndef BEAM_SCENE_INCLUDED
 #define BEAM_SCENE_INCLUDED
 
-#include <raytracer.hpp>
-
 #include <vkrndr_scene.hpp>
 #include <vulkan_image.hpp>
 
@@ -16,12 +14,17 @@ namespace vkrndr
 
 namespace beam
 {
+    class raytracer;
+} // namespace beam
+
+namespace beam
+{
     class [[nodiscard]] scene final : public vkrndr::scene
     {
     public:
-        scene(vkrndr::vulkan_device* const device,
-            vkrndr::vulkan_renderer* const renderer,
-            VkExtent2D const extent);
+        scene(vkrndr::vulkan_device* device,
+            vkrndr::vulkan_renderer* renderer,
+            VkExtent2D extent);
 
         scene(scene const&) = delete;
 
@@ -36,7 +39,7 @@ namespace beam
         void set_raytracer(raytracer* raytracer);
 
     public: // vkrndr::scene overrides
-        void resize(VkExtent2D const extent) override;
+        void resize(VkExtent2D extent) override;
 
         void draw(vkrndr::vulkan_image const& target_image,
             VkCommandBuffer command_buffer,
@@ -50,13 +53,13 @@ namespace beam
         scene& operator=(scene&&) = delete;
 
     private:
-        vkrndr::vulkan_image create_color_image(VkExtent2D const extent);
+        vkrndr::vulkan_image create_color_image(VkExtent2D extent) const;
 
     private:
         vkrndr::vulkan_device* device_;
         vkrndr::vulkan_renderer* renderer_;
 
-        raytracer* raytracer_;
+        raytracer* raytracer_{};
 
         vkrndr::vulkan_image color_image_;
     };

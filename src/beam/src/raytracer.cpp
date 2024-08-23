@@ -5,29 +5,37 @@
 #include <sphere.hpp>
 
 #include <cppext_numeric.hpp>
+#include <cppext_pragma_warning.hpp>
 
+#include <vulkan_buffer.hpp>
 #include <vulkan_descriptors.hpp>
 #include <vulkan_device.hpp>
+#include <vulkan_image.hpp>
 #include <vulkan_memory.hpp>
 #include <vulkan_pipeline.hpp>
 #include <vulkan_renderer.hpp>
 #include <vulkan_utility.hpp>
 
-#include <glm/gtc/type_ptr.hpp>
 #include <glm/vec3.hpp>
 
 #include <imgui.h>
 
 #include <vulkan/vulkan_core.h>
 
+#include <algorithm>
 #include <array>
-#include <iostream>
+#include <cmath>
 #include <random>
+
+// IWYU pragma: no_include <filesystem>
 
 namespace
 {
+    // NOLINTBEGIN(cppcoreguidelines-avoid-non-const-global-variables)
     std::default_random_engine rng{std::random_device{}()};
     std::uniform_int_distribution<uint32_t> frame_dist{};
+
+    // NOLINTEND(cppcoreguidelines-avoid-non-const-global-variables)
 
     struct [[nodiscard]] push_constants
     {
@@ -159,6 +167,8 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
             .with_shader("raytracer.comp.spv", "main")
             .build());
 
+    DISABLE_WARNING_PUSH
+    DISABLE_WARNING_MISSING_FIELD_INITIALIZERS
     bind_descriptor_set(device_,
         descriptor_set_,
         VkDescriptorImageInfo{.imageView = scene_->color_image().view,
@@ -169,6 +179,7 @@ beam::raytracer::raytracer(vkrndr::vulkan_device* device,
         VkDescriptorBufferInfo{.buffer = material_buffer_.buffer,
             .offset = 0,
             .range = material_buffer_.size});
+    DISABLE_WARNING_POP
 }
 
 beam::raytracer::~raytracer()
@@ -191,7 +202,7 @@ void beam::raytracer::update(perspective_camera const& camera)
 
 void beam::raytracer::draw(VkCommandBuffer command_buffer)
 {
-    auto& target_extent{scene_->color_image().extent};
+    auto const& target_extent{scene_->color_image().extent};
 
     push_constants const pc{.camera_position = camera_position_,
         .world_count = sphere_count_,
@@ -226,11 +237,13 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
             std::ceil(cppext::as_fp(target_extent.height) / 16.0f)),
         1);
 
-    total_samples_ += samples_per_pixel_;
+    total_samples_ += cppext::narrow<uint32_t>(samples_per_pixel_);
 }
 
 void beam::raytracer::on_resize()
 {
+    DISABLE_WARNING_PUSH
+    DISABLE_WARNING_MISSING_FIELD_INITIALIZERS
     bind_descriptor_set(device_,
         descriptor_set_,
         VkDescriptorImageInfo{.imageView = scene_->color_image().view,
@@ -241,6 +254,7 @@ void beam::raytracer::on_resize()
         VkDescriptorBufferInfo{.buffer = material_buffer_.buffer,
             .offset = 0,
             .range = material_buffer_.size});
+    DISABLE_WARNING_POP
 }
 
 void beam::raytracer::draw_imgui()
@@ -319,16 +333,16 @@ void beam::raytracer::fill_world_and_materials()
     static constexpr uint32_t metal{1};
     static constexpr uint32_t dielectric{2};
 
-    std::uniform_real_distribution<float> dist{0.0, 1.0f};
-    std::uniform_real_distribution<float> lower_dist{0.0, 0.5f};
-    std::uniform_real_distribution<float> upper_dist{0.5, 1.0f};
+    std::uniform_real_distribution<float> dist{0.0f, 1.0f};
+    std::uniform_real_distribution<float> lower_dist{0.0f, 0.5f};
+    std::uniform_real_distribution<float> upper_dist{0.5f, 1.0f};
 
     std::vector<sphere> spheres;
     std::vector<material> materials;
     materials.emplace_back(glm::vec3{0.5f, 0.5f, 0.5f}, 0.0f, lambertian);
     spheres.emplace_back(glm::vec3{0.0f, -1000.0f, 0.0f},
         1000.0f,
-        materials.size() - 1);
+        cppext::narrow<uint32_t>(materials.size() - 1));
 
     auto gen_color = [&]()
     { return glm::vec3{dist(rng), dist(rng), dist(rng)}; };
@@ -342,15 +356,15 @@ void beam::raytracer::fill_world_and_materials()
                 0.2f,
                 cppext::as_fp(b) + 0.9f * dist(rng)};
 
-            if ((center - glm::vec3{4.0f, 0.2f, 0.0f}).length() > 0.9)
+            if (glm::length(center - glm::vec3{4.0f, 0.2f, 0.0f}) > 0.9f)
             {
-                if (choose_mat < 0.8)
+                if (choose_mat < 0.8f)
                 {
                     // diffuse
                     glm::vec3 const albedo{gen_color() * gen_color()};
                     materials.emplace_back(albedo, 0.0f, lambertian);
                 }
-                else if (choose_mat < 0.95)
+                else if (choose_mat < 0.95f)
                 {
                     // metal
                     glm::vec3 const albedo{upper_dist(rng),
@@ -364,7 +378,9 @@ void beam::raytracer::fill_world_and_materials()
                     materials.emplace_back(glm::vec3{}, 1.5f, dielectric);
                 }
 
-                spheres.emplace_back(center, 0.2f, materials.size() - 1);
+                spheres.emplace_back(center,
+                    0.2f,
+                    cppext::narrow<uint32_t>(materials.size() - 1));
             }
         }
     }
@@ -372,17 +388,17 @@ void beam::raytracer::fill_world_and_materials()
     materials.emplace_back(glm::vec3{}, 1.5f, dielectric);
     spheres.emplace_back(glm::vec3{0.0f, 1.0f, 0.0f},
         1.0f,
-        materials.size() - 1);
+        cppext::narrow<uint32_t>(materials.size() - 1));
 
     materials.emplace_back(glm::vec3{0.4f, 0.2f, 0.1f}, 0.0f, lambertian);
     spheres.emplace_back(glm::vec3{-4.0f, 1.0f, 0.0f},
         1.0f,
-        materials.size() - 1);
+        cppext::narrow<uint32_t>(materials.size() - 1));
 
     materials.emplace_back(glm::vec3{0.7f, 0.6f, 0.5f}, 0.0f, metal);
     spheres.emplace_back(glm::vec3{4.0f, 1.0f, 0.0f},
         1.0f,
-        materials.size() - 1);
+        cppext::narrow<uint32_t>(materials.size() - 1));
 
     fill_materials(materials);
     fill_world(spheres);

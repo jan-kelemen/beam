@@ -25,8 +25,6 @@ namespace vkrndr
     class font_manager;
     class imgui_render_layer;
     struct vulkan_buffer;
-    struct vulkan_context;
-    struct vulkan_device;
     class scene;
     class vulkan_swap_chain;
     class vulkan_window;

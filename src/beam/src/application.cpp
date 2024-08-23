@@ -1,21 +1,24 @@
 #include <application.hpp>
+#include <free_camera_controller.hpp>
+#include <perspective_camera.hpp>
 #include <raytracer.hpp>
 #include <scene.hpp>
 
 #include <cppext_numeric.hpp>
 
 #include <niku_application.hpp>
+#include <niku_mouse.hpp>
 
 #include <vulkan_renderer.hpp>
 
+#include <SDL2/SDL_events.h>
+#include <SDL2/SDL_scancode.h>
 #include <SDL2/SDL_video.h>
-
-#include <imgui.h>
 
 #include <vulkan/vulkan_core.h>
 
+#include <cstdint>
 #include <memory>
-#include <optional>
 
 beam::application::application(bool const debug)
     : niku::application{niku::startup_params{
@@ -47,7 +50,7 @@ beam::application::application(bool const debug)
     raytracer_->update(camera_);
 }
 
-beam::application::~application() { }
+beam::application::~application() = default;
 
 bool beam::application::handle_event(SDL_Event const& event)
 {
