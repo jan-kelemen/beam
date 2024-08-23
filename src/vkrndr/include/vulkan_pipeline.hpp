@@ -22,22 +22,21 @@ namespace vkrndr
 {
     struct [[nodiscard]] vulkan_pipeline final
     {
-        std::shared_ptr<VkPipelineLayout> pipeline_layout;
+        std::shared_ptr<VkPipelineLayout> layout;
         VkPipeline pipeline;
+        VkPipelineBindPoint type;
     };
 
     void bind_pipeline(VkCommandBuffer command_buffer,
         vulkan_pipeline const& pipeline,
-        VkPipelineBindPoint bind_point,
         uint32_t first_set,
         std::span<VkDescriptorSet const> descriptor_sets);
 
     inline void bind_pipeline(VkCommandBuffer command_buffer,
-        vulkan_pipeline const& pipeline,
-        VkPipelineBindPoint const bind_point)
+        vulkan_pipeline const& pipeline)
     {
         std::span<VkDescriptorSet const> const descriptor_sets;
-        bind_pipeline(command_buffer, pipeline, bind_point, 0, descriptor_sets);
+        bind_pipeline(command_buffer, pipeline, 0, descriptor_sets);
     }
 
     void destroy(vulkan_device* device, vulkan_pipeline* pipeline);

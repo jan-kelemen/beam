@@ -66,15 +66,14 @@ namespace
 
 void vkrndr::bind_pipeline(VkCommandBuffer command_buffer,
     vulkan_pipeline const& pipeline,
-    VkPipelineBindPoint const bind_point,
     uint32_t const first_set,
     std::span<VkDescriptorSet const> descriptor_sets)
 {
     if (!descriptor_sets.empty())
     {
         vkCmdBindDescriptorSets(command_buffer,
-            bind_point,
-            *pipeline.pipeline_layout,
+            pipeline.type,
+            *pipeline.layout,
             first_set,
             count_cast(descriptor_sets.size()),
             descriptor_sets.data(),
@@ -82,7 +81,7 @@ void vkrndr::bind_pipeline(VkCommandBuffer command_buffer,
             nullptr);
     }
 
-    vkCmdBindPipeline(command_buffer, bind_point, pipeline.pipeline);
+    vkCmdBindPipeline(command_buffer, pipeline.type, pipeline.pipeline);
 }
 
 void vkrndr::destroy(vulkan_device* const device,
@@ -91,12 +90,12 @@ void vkrndr::destroy(vulkan_device* const device,
     if (pipeline)
     {
         vkDestroyPipeline(device->logical, pipeline->pipeline, nullptr);
-        if (pipeline->pipeline_layout.use_count() == 1)
+        if (pipeline->layout.use_count() == 1)
         {
             vkDestroyPipelineLayout(device->logical,
-                *pipeline->pipeline_layout,
+                *pipeline->layout,
                 nullptr);
-            pipeline->pipeline_layout.reset();
+            pipeline->layout.reset();
         }
     }
 }
@@ -279,7 +278,9 @@ vkrndr::vulkan_pipeline vkrndr::vulkan_pipeline_builder::build()
         nullptr,
         &pipeline));
 
-    vulkan_pipeline rv{pipeline_layout_, pipeline};
+    vulkan_pipeline rv{pipeline_layout_,
+        pipeline,
+        VK_PIPELINE_BIND_POINT_GRAPHICS};
 
     cleanup();
 
@@ -487,7 +488,9 @@ vkrndr::vulkan_pipeline vkrndr::vulkan_compute_pipeline_builder::build()
         nullptr,
         &pipeline));
 
-    vulkan_pipeline rv{pipeline_layout_, pipeline};
+    vulkan_pipeline rv{pipeline_layout_,
+        pipeline,
+        VK_PIPELINE_BIND_POINT_COMPUTE};
 
     cleanup();
 

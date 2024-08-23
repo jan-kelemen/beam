@@ -10,6 +10,7 @@
 namespace vkrndr
 {
     struct vulkan_device;
+    struct vulkan_buffer;
 } // namespace vkrndr
 
 namespace vkrndr
@@ -46,7 +47,7 @@ namespace vkrndr
     };
 
     mapped_memory map_memory(vulkan_device const& device,
-        VmaAllocation const& allocation);
+        vulkan_buffer const& buffer);
 
     void unmap_memory(vulkan_device const& device, mapped_memory* memory);
 } // namespace vkrndr

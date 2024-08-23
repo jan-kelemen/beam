@@ -302,7 +302,7 @@ vkrndr::vulkan_image vkrndr::vulkan_renderer::transfer_image(
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
-    mapped_memory staging_map{map_memory(device_, staging_buffer.allocation)};
+    mapped_memory staging_map{map_memory(device_, staging_buffer)};
     memcpy(staging_map.mapped_memory, image_data.data(), image_data.size());
     unmap_memory(device_, &staging_map);
 
@@ -406,7 +406,7 @@ vkrndr::vulkan_font vkrndr::vulkan_renderer::load_font(
         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
-    mapped_memory staging_map{map_memory(device_, staging_buffer.allocation)};
+    mapped_memory staging_map{map_memory(device_, staging_buffer)};
     memcpy(staging_map.mapped_memory,
         font_bitmap.bitmap_data.data(),
         static_cast<size_t>(image_size));

@@ -220,7 +220,7 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
         .frame_seed = frame_dist(rng)};
 
     vkCmdPushConstants(command_buffer,
-        *compute_pipeline_->pipeline_layout,
+        *compute_pipeline_->layout,
         VK_SHADER_STAGE_COMPUTE_BIT,
         0,
         sizeof(push_constants),
@@ -228,7 +228,6 @@ void beam::raytracer::draw(VkCommandBuffer command_buffer)
 
     vkrndr::bind_pipeline(command_buffer,
         *compute_pipeline_,
-        VK_PIPELINE_BIND_POINT_COMPUTE,
         0,
         std::span{&descriptor_set_, 1});
 
@@ -286,7 +285,7 @@ void beam::raytracer::fill_world(std::span<sphere const> spheres)
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
     {
-        auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
+        auto world_map{vkrndr::map_memory(*device_, staging_buffer)};
         sphere* const sph{world_map.as<sphere>()};
         std::ranges::copy(spheres, sph);
         unmap_memory(*device_, &world_map);
@@ -312,7 +311,7 @@ void beam::raytracer::fill_materials(std::span<material const> materials)
             VK_MEMORY_PROPERTY_HOST_COHERENT_BIT)};
 
     {
-        auto world_map{vkrndr::map_memory(*device_, staging_buffer.allocation)};
+        auto world_map{vkrndr::map_memory(*device_, staging_buffer)};
         material* const mat{world_map.as<material>()};
         std::ranges::copy(materials, mat);
         unmap_memory(*device_, &world_map);
