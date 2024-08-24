@@ -18,8 +18,8 @@ namespace vkrndr
 
 namespace beam
 {
-    class scene;
     class raytracer;
+    class renderer;
 } // namespace beam
 
 namespace beam
@@ -56,7 +56,7 @@ namespace beam
 
         free_camera_controller camera_controller_;
 
-        std::unique_ptr<scene> scene_;
+        std::unique_ptr<renderer> renderer_;
         std::unique_ptr<raytracer> raytracer_;
     };
 } // namespace beam

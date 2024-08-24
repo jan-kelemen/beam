@@ -1,7 +1,7 @@
 #include <raytracer.hpp>
 
 #include <perspective_camera.hpp>
-#include <scene.hpp>
+#include <renderer.hpp>
 #include <sphere.hpp>
 
 #include <cppext_numeric.hpp>
@@ -143,7 +143,7 @@ namespace
 
 beam::raytracer::raytracer(vkrndr::vulkan_device* device,
     vkrndr::vulkan_renderer* renderer,
-    scene* scene)
+    beam::renderer* scene)
     : device_{device}
     , renderer_{renderer}
     , scene_{scene}

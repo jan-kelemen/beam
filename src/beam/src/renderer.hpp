@@ -1,5 +1,5 @@
-#ifndef BEAM_SCENE_INCLUDED
-#define BEAM_SCENE_INCLUDED
+#ifndef BEAM_RENDERER_INCLUDED
+#define BEAM_RENDERER_INCLUDED
 
 #include <vkrndr_scene.hpp>
 #include <vulkan_image.hpp>
@@ -19,19 +19,19 @@ namespace beam
 
 namespace beam
 {
-    class [[nodiscard]] scene final : public vkrndr::scene
+    class [[nodiscard]] renderer final : public vkrndr::scene
     {
     public:
-        scene(vkrndr::vulkan_device* device,
+        renderer(vkrndr::vulkan_device* device,
             vkrndr::vulkan_renderer* renderer,
             VkExtent2D extent);
 
-        scene(scene const&) = delete;
+        renderer(renderer const&) = delete;
 
-        scene(scene&&) noexcept = delete;
+        renderer(renderer&&) noexcept = delete;
 
     public:
-        ~scene() override;
+        ~renderer() override;
 
     public:
         [[nodiscard]] vkrndr::vulkan_image& color_image();

@@ -22,7 +22,7 @@ namespace vkrndr
 
 namespace beam
 {
-    class scene;
+    class renderer;
     class perspective_camera;
 } // namespace beam
 
@@ -33,7 +33,7 @@ namespace beam
     public:
         raytracer(vkrndr::vulkan_device* device,
             vkrndr::vulkan_renderer* renderer,
-            scene* scene);
+            beam::renderer* scene);
 
         raytracer(raytracer const&) = delete;
 
@@ -64,7 +64,7 @@ namespace beam
     private:
         vkrndr::vulkan_device* device_;
         vkrndr::vulkan_renderer* renderer_;
-        scene* scene_;
+        renderer* scene_;
 
         VkDescriptorSetLayout descriptor_layout_;
         VkDescriptorSet descriptor_set_{VK_NULL_HANDLE};

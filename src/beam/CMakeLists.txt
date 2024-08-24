@@ -6,7 +6,7 @@ target_sources(beam
         ${CMAKE_CURRENT_SOURCE_DIR}/src/free_camera_controller.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/perspective_camera.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/raytracer.hpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/scene.hpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer.hpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/sphere.hpp
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp
@@ -14,7 +14,7 @@ target_sources(beam
         ${CMAKE_CURRENT_SOURCE_DIR}/src/free_camera_controller.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/perspective_camera.cpp
         ${CMAKE_CURRENT_SOURCE_DIR}/src/raytracer.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/scene.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/renderer.cpp
 )
 
 target_include_directories(beam

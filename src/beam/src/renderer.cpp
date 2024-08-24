@@ -1,4 +1,4 @@
-#include <scene.hpp>
+#include <renderer.hpp>
 
 #include <raytracer.hpp>
 
@@ -15,7 +15,7 @@
 #include <algorithm>
 #include <cstdint>
 
-beam::scene::scene(vkrndr::vulkan_device* const device,
+beam::renderer::renderer(vkrndr::vulkan_device* const device,
     vkrndr::vulkan_renderer* const renderer,
     VkExtent2D const extent)
     : device_{device}
@@ -24,16 +24,16 @@ beam::scene::scene(vkrndr::vulkan_device* const device,
 {
 }
 
-beam::scene::~scene() { destroy(device_, &color_image_); }
+beam::renderer::~renderer() { destroy(device_, &color_image_); }
 
-vkrndr::vulkan_image& beam::scene::color_image() { return color_image_; }
+vkrndr::vulkan_image& beam::renderer::color_image() { return color_image_; }
 
-void beam::scene::set_raytracer(raytracer* raytracer)
+void beam::renderer::set_raytracer(raytracer* raytracer)
 {
     raytracer_ = raytracer;
 }
 
-void beam::scene::resize(VkExtent2D const extent)
+void beam::renderer::resize(VkExtent2D const extent)
 {
     vkDeviceWaitIdle(device_->logical); // TODO-JK
 
@@ -42,7 +42,7 @@ void beam::scene::resize(VkExtent2D const extent)
     raytracer_->on_resize();
 }
 
-void beam::scene::draw(vkrndr::vulkan_image const& target_image,
+void beam::renderer::draw(vkrndr::vulkan_image const& target_image,
     VkCommandBuffer command_buffer,
     VkExtent2D const extent)
 {
@@ -123,13 +123,13 @@ void beam::scene::draw(vkrndr::vulkan_image const& target_image,
         1);
 }
 
-void beam::scene::draw_imgui()
+void beam::renderer::draw_imgui()
 {
     ImGui::ShowMetricsWindow();
     raytracer_->draw_imgui();
 }
 
-vkrndr::vulkan_image beam::scene::create_color_image(
+vkrndr::vulkan_image beam::renderer::create_color_image(
     VkExtent2D const extent) const
 {
     return vkrndr::create_image_and_view(*device_,

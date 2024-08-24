@@ -2,7 +2,7 @@
 #include <free_camera_controller.hpp>
 #include <perspective_camera.hpp>
 #include <raytracer.hpp>
-#include <scene.hpp>
+#include <renderer.hpp>
 
 #include <cppext_numeric.hpp>
 
@@ -32,12 +32,12 @@ beam::application::application(bool const debug)
           .render = {.preferred_present_mode = VK_PRESENT_MODE_FIFO_KHR}}}
     , mouse_{debug}
     , camera_controller_{&camera_, &mouse_}
-    , scene_{std::make_unique<scene>(this->vulkan_device(),
+    , renderer_{std::make_unique<renderer>(this->vulkan_device(),
           this->vulkan_renderer(),
           this->vulkan_renderer()->extent())}
     , raytracer_{std::make_unique<raytracer>(this->vulkan_device(),
           this->vulkan_renderer(),
-          scene_.get())}
+          renderer_.get())}
 {
     this->vulkan_renderer()->imgui_layer(true);
 
@@ -46,7 +46,7 @@ beam::application::application(bool const debug)
     camera_.resize({512, 512});
     camera_.update();
 
-    scene_->set_raytracer(raytracer_.get());
+    renderer_->set_raytracer(raytracer_.get());
     raytracer_->update(camera_);
 }
 
@@ -62,7 +62,7 @@ bool beam::application::handle_event(SDL_Event const& event)
         if (window.event == SDL_WINDOWEVENT_RESIZED ||
             window.event == SDL_WINDOWEVENT_SIZE_CHANGED)
         {
-            scene_->resize({cppext::narrow<uint32_t>(window.data1),
+            renderer_->resize({cppext::narrow<uint32_t>(window.data1),
                 cppext::narrow<uint32_t>(window.data2)});
         }
 
@@ -96,4 +96,4 @@ void beam::application::update(float delta_time)
     }
 }
 
-vkrndr::scene* beam::application::render_scene() { return scene_.get(); }
+vkrndr::scene* beam::application::render_scene() { return renderer_.get(); }
