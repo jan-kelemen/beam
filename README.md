@@ -1,4 +1,5 @@
 # beam [![GitHub Build status](https://github.com/jan-kelemen/beam/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/jan-kelemen/beam/actions/workflows/ci.yml)
+Raytracer using Vulkan compute shaders. Blog post: [I See Spheres Now](https://jan-kelemen.github.io/2024/08/25/i-see-spheres-now.html)
 
 ## Building
 Necessary build tools are:
